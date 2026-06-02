@@ -41,13 +41,27 @@ https://momentum-os-eight.vercel.app
 ### Insights
 ![Insights](Insights.png)
 
-## 🎯 Roadmap
+## 🚀 Next Major Update (v1.1)
 
-- User Authentication
-- Cloud Database
-- AI Recommendations
-- Team Collaboration
-- Mobile App
+### Authentication
+- User Sign Up
+- User Login
+- Protected Dashboard
+
+### Cloud Sync
+- Store tasks online
+- Sync across devices
+- Secure user data
+
+### AI Improvements
+- Weekly productivity review
+- Goal completion predictions
+- Personalized recommendations
+
+### User Experience
+- Improved landing page
+- Better mobile responsiveness
+- Faster performance
 
 ## 🔗 Links
 
