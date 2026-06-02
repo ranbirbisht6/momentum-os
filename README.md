@@ -26,7 +26,20 @@ https://momentum-os-eight.vercel.app
 
 ## 📊 Screenshots
 
-Coming Soon
+### Dashboard
+![Dashboard](dashboard.png)
+
+### Today Planning
+![Today Planning](Today.png)
+
+### Month Planning
+![Month Planning](Month.png)
+
+### Year Planning
+![Year Planning](Year.png)
+
+### Insights
+![Insights](Insights.png)
 
 ## 🎯 Roadmap
 
