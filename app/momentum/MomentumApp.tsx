@@ -57,7 +57,7 @@ function MomentumContent() {
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       >
-        {tab === "dashboard" && <DashboardView actions={actions} />}
+        {tab === "dashboard" && <DashboardView actions={actions} onNavigate={setTab} />}
         {tab === "calendar" && <CalendarView actions={actions} />}
         {tab === "today" && (
           <TodayView

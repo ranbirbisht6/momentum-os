@@ -1,19 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  GripVertical,
+} from "lucide-react";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
 import type { CalendarMode, DailyCategory } from "../../types";
 import { categoryIsComplete, toDateKey } from "../../utils";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
+import { EmptyState } from "../ui/EmptyState";
 
 const MODES: { value: CalendarMode; label: string }[] = [
   { value: "day", label: "Day" },
   { value: "week", label: "Week" },
   { value: "month", label: "Month" },
-  { value: "agenda", label: "Agenda" },
 ];
+
+const HOURS = ["8 AM", "10 AM", "12 PM", "2 PM", "4 PM", "6 PM"];
 
 export function CalendarView({ actions }: { actions: MomentumActions }) {
   const [mode, setMode] = useState<CalendarMode>("week");
@@ -28,6 +36,11 @@ export function CalendarView({ actions }: { actions: MomentumActions }) {
     return map;
   }, [actions.store.dailyCategories]);
 
+  const totalVisibleTasks = visibleDays.reduce(
+    (total, date) => total + (tasksByDate.get(toDateKey(date))?.length ?? 0),
+    0,
+  );
+
   const shift = (amount: number) => {
     setAnchor((current) => {
       const next = new Date(current);
@@ -39,134 +52,209 @@ export function CalendarView({ actions }: { actions: MomentumActions }) {
 
   return (
     <PageContainer className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => shift(-1)}
-            className="rounded-lg p-2 muted-text hover:bg-[var(--surface-soft)]"
-            aria-label="Previous"
-          >
+      <Surface className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between" padding="lg">
+        <div>
+          <span className="section-label">Calendar</span>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--text)] sm:text-4xl">
+            {anchor.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 muted-text">
+            Drag tasks between days to schedule work, goals, deadlines, and reminder-driven tasks in one place.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => shift(-1)} className="rounded-xl border border-[var(--border)] p-2 muted-text transition hover:bg-[var(--surface-soft)]" aria-label="Previous">
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <div>
-            <p className="text-sm font-semibold text-[var(--text)]">
-              {anchor.toLocaleDateString(undefined, {
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-            <p className="text-xs muted-text">Drag tasks onto a date to schedule.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => shift(1)}
-            className="rounded-lg p-2 muted-text hover:bg-[var(--surface-soft)]"
-            aria-label="Next"
-          >
+          <button type="button" onClick={() => setAnchor(new Date())} className="min-h-10 rounded-xl border border-[var(--border)] px-4 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--surface-soft)]">
+            Today
+          </button>
+          <button type="button" onClick={() => shift(1)} className="rounded-xl border border-[var(--border)] p-2 muted-text transition hover:bg-[var(--surface-soft)]" aria-label="Next">
             <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
-        <div className="flex rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1">
-          {MODES.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => setMode(item.value)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                mode === item.value
-                  ? "bg-[var(--accent-soft)] accent-text"
-                  : "muted-text hover:text-[var(--text)]"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div
-        className={`grid gap-3 ${
-          mode === "day" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-7"
-        }`}
-      >
-        {visibleDays.map((date) => {
-          const key = toDateKey(date);
-          const tasks = tasksByDate.get(key) ?? [];
-          return (
-            <Surface
-              key={key}
-              className="min-h-44"
-              padding="sm"
-            >
-              <div
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  const id = event.dataTransfer.getData("text/task-id");
-                  if (id) actions.moveDailyCategory(id, key);
-                }}
-                className="flex min-h-36 flex-col gap-2"
+          <div className="ml-0 flex rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-1 sm:ml-2">
+            {MODES.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setMode(item.value)}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  mode === item.value
+                    ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                    : "muted-text hover:text-[var(--text)]"
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider soft-text">
-                      {date.toLocaleDateString(undefined, { weekday: "short" })}
-                    </p>
-                    <p className="text-lg font-semibold text-[var(--text)]">
-                      {date.getDate()}
-                    </p>
-                  </div>
-                  <CalendarDays className="h-4 w-4 soft-text" />
-                </div>
-                {tasks.map((task) => (
-                  <TaskChip key={task.id} task={task} />
-                ))}
-                {tasks.length === 0 && (
-                  <p className="mt-4 text-xs muted-text">Drop tasks here.</p>
-                )}
-              </div>
-            </Surface>
-          );
-        })}
-      </div>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Surface>
+
+      {totalVisibleTasks === 0 && (
+        <EmptyState
+          icon="."
+          title="Your calendar is open"
+          hint="Add tasks from Today or drop existing work onto dates to build a focused schedule."
+        />
+      )}
+
+      {mode === "day" ? (
+        <DaySchedule
+          date={visibleDays[0]}
+          tasks={tasksByDate.get(toDateKey(visibleDays[0])) ?? []}
+          onDropTask={(taskId, dateKey) => actions.moveDailyCategory(taskId, dateKey)}
+        />
+      ) : (
+        <div
+          className={`grid gap-3 ${
+            mode === "month" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-7" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-7"
+          }`}
+        >
+          {visibleDays.map((date) => {
+            const key = toDateKey(date);
+            const tasks = tasksByDate.get(key) ?? [];
+            const isCurrentMonth = date.getMonth() === anchor.getMonth();
+            return (
+              <DayColumn
+                key={key}
+                date={date}
+                tasks={tasks}
+                muted={mode === "month" && !isCurrentMonth}
+                onDropTask={(taskId) => actions.moveDailyCategory(taskId, key)}
+              />
+            );
+          })}
+        </div>
+      )}
     </PageContainer>
   );
 }
 
-function TaskChip({ task }: { task: DailyCategory }) {
+function DayColumn({
+  date,
+  tasks,
+  muted,
+  onDropTask,
+}: {
+  date: Date;
+  tasks: DailyCategory[];
+  muted?: boolean;
+  onDropTask: (taskId: string) => void;
+}) {
+  return (
+    <Surface padding="sm" className={`min-h-56 card-hover ${muted ? "opacity-55" : ""}`}>
+      <div
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          const id = event.dataTransfer.getData("text/task-id");
+          if (id) onDropTask(id);
+        }}
+        className="flex min-h-48 flex-col"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="section-label">
+              {date.toLocaleDateString(undefined, { weekday: "short" })}
+            </p>
+            <p className="mt-1 text-3xl font-semibold text-[var(--text)]">{date.getDate()}</p>
+          </div>
+          <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-xs muted-text">
+            {tasks.length}
+          </span>
+        </div>
+        <div className="mt-4 space-y-2">
+          {tasks.slice(0, 4).map((task) => (
+            <TaskChip key={task.id} task={task} />
+          ))}
+          {tasks.length > 4 && (
+            <p className="text-xs muted-text">+{tasks.length - 4} more tasks</p>
+          )}
+        </div>
+        {tasks.length === 0 && (
+          <div className="mt-4 grid flex-1 place-items-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center text-xs muted-text">
+            Drop tasks here
+          </div>
+        )}
+      </div>
+    </Surface>
+  );
+}
+
+function DaySchedule({
+  date,
+  tasks,
+  onDropTask,
+}: {
+  date: Date;
+  tasks: DailyCategory[];
+  onDropTask: (taskId: string, dateKey: string) => void;
+}) {
+  const key = toDateKey(date);
+  return (
+    <Surface className="space-y-5" padding="lg">
+      <div className="flex items-center gap-3">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--accent-soft)]">
+          <CalendarDays className="h-5 w-5 accent-text" />
+        </div>
+        <div>
+          <p className="section-label">{date.toLocaleDateString(undefined, { weekday: "long" })}</p>
+          <h3 className="text-2xl font-semibold text-[var(--text)]">
+            {date.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+          </h3>
+        </div>
+      </div>
+      <div
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          const id = event.dataTransfer.getData("text/task-id");
+          if (id) onDropTask(id, key);
+        }}
+        className="space-y-3"
+      >
+        {HOURS.map((hour, index) => (
+          <div key={hour} className="grid gap-3 border-t border-[var(--border)] pt-3 md:grid-cols-[5rem_1fr]">
+            <p className="text-xs font-semibold soft-text">{hour}</p>
+            <div className="min-h-20 rounded-2xl bg-[var(--surface-soft)] p-3">
+              {index === 0
+                ? tasks.map((task) => <TaskChip key={task.id} task={task} wide />)
+                : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+
+function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean }) {
   const complete = categoryIsComplete(task);
   return (
     <div
       draggable
       onDragStart={(event) => event.dataTransfer.setData("text/task-id", task.id)}
-      className={`rounded-lg border border-[var(--border)] bg-[var(--surface-soft)] p-2 text-xs shadow-sm ${
+      className={`mb-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 text-xs shadow-sm transition hover:border-[var(--accent)] ${
         complete ? "opacity-60" : ""
-      }`}
+      } ${wide ? "flex items-center justify-between gap-3" : ""}`}
     >
-      <p
-        className={`font-medium ${
-          complete ? "text-[var(--muted-soft)] line-through" : "text-[var(--text)]"
-        }`}
-      >
-        {task.title}
-      </p>
-      <p className="mt-1 muted-text">
-        {task.scheduledAt || "Anytime"}
-        {task.reminder.offset !== "none" ? ` - ${task.reminder.offset}` : ""}
-      </p>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <GripVertical className="h-3.5 w-3.5 shrink-0 soft-text" />
+          <p className={`truncate font-semibold ${complete ? "text-[var(--muted-soft)] line-through" : "text-[var(--text)]"}`}>
+            {task.title}
+          </p>
+        </div>
+        <p className="mt-2 flex items-center gap-1 muted-text">
+          <Clock3 className="h-3.5 w-3.5" />
+          {task.scheduledAt || "Anytime"}
+          {task.reminder.offset !== "none" ? ` / ${task.reminder.offset}` : ""}
+        </p>
+      </div>
     </div>
   );
 }
 
 function getVisibleDays(anchor: Date, mode: CalendarMode) {
-  if (mode === "agenda") {
-    return Array.from({ length: 14 }, (_, index) => {
-      const date = new Date();
-      date.setDate(date.getDate() + index);
-      return date;
-    });
-  }
-
   if (mode === "day") return [anchor];
 
   if (mode === "week") {

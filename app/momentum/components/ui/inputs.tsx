@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 const inputClass =
-  "min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)] disabled:opacity-50";
+  "input-shell min-h-11 w-full rounded-xl px-4 text-sm placeholder:text-[var(--muted-soft)] disabled:opacity-50";
 
 const selectClass =
-  "min-h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)] disabled:opacity-50";
+  "input-shell min-h-11 rounded-xl px-3 text-sm disabled:opacity-50";
 
 export function TextInput({
   value,
@@ -83,7 +83,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`min-h-11 shrink-0 rounded-lg px-5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${toneClass}`}
+      className={`min-h-11 shrink-0 rounded-xl px-5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${toneClass}`}
     >
       {children}
     </button>

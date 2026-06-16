@@ -8,12 +8,14 @@ export function EmptyState({
   icon?: string;
 }) {
   return (
-    <div className="py-16 text-center">
-      <div className="surface-soft mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-dashed text-xl accent-text">
+    <div className="premium-card rounded-3xl px-6 py-14 text-center">
+      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--accent-soft)] text-2xl accent-text shadow-sm">
         {icon}
       </div>
-      <p className="text-base font-medium text-[var(--text)]">{title}</p>
-      <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed muted-text">
+      <p className="text-lg font-semibold tracking-tight text-[var(--text)]">
+        {title}
+      </p>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 muted-text">
         {hint}
       </p>
     </div>

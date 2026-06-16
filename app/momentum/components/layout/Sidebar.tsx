@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, PanelLeft, PanelLeftClose, Sun, X } from "lucide-react";
+import { Moon, PanelLeft, PanelLeftClose, Sparkles, Sun, X } from "lucide-react";
 import { PRIMARY_NAV_ITEMS, SECONDARY_NAV_ITEMS } from "../../constants";
 import type { TabId } from "../../types";
 
@@ -35,14 +35,17 @@ export function Sidebar({
           onCloseMobile();
         }}
         title={collapsed ? item.label : undefined}
-        className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
+        className={`group relative flex h-10 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition ${
           active
-            ? "bg-[var(--accent-soft)] text-[var(--accent-strong)]"
+            ? "bg-[var(--accent-soft)] text-[var(--accent-strong)] shadow-sm"
             : "muted-text hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
         } ${collapsed ? "justify-center px-2" : ""}`}
       >
-        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-        {!collapsed && <span>{item.label}</span>}
+        {active && !collapsed && (
+          <span className="absolute left-1 h-5 w-1 rounded-full bg-[var(--accent)]" />
+        )}
+        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} />
+        {!collapsed && <span className="truncate">{item.label}</span>}
       </button>
     );
   };
@@ -63,19 +66,24 @@ export function Sidebar({
         } ${collapsed ? "w-[4.75rem]" : "w-64"}`}
       >
         <div
-          className={`flex h-16 items-center border-b px-3 ${
+          className={`flex h-[4.75rem] items-center border-b px-3 ${
             collapsed ? "justify-center" : "justify-between"
           }`}
           style={{ borderColor: "var(--border)" }}
         >
           {!collapsed && (
-            <div>
-              <span className="text-sm font-semibold tracking-tight text-[var(--text)]">
-                Momentum
-              </span>
-              <p className="mt-0.5 text-[0.68rem] uppercase tracking-[0.18em] soft-text">
-                OS
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-bold text-white shadow-sm">
+                M
+              </div>
+              <div className="min-w-0">
+                <span className="block truncate text-sm font-semibold tracking-tight text-[var(--text)]">
+                  Momentum OS
+                </span>
+                <p className="mt-0.5 truncate text-[0.68rem] font-semibold uppercase tracking-[0.16em] soft-text">
+                  Command center
+                </p>
+              </div>
             </div>
           )}
           <button
@@ -100,17 +108,25 @@ export function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main">
+        <nav className="flex-1 overflow-y-auto p-3" aria-label="Main">
+          {!collapsed && (
+            <div className="mb-2 flex items-center justify-between px-3">
+              <span className="section-label">Workspace</span>
+              <Sparkles className="h-3.5 w-3.5 soft-text" />
+            </div>
+          )}
+          <div className="space-y-1">
           {PRIMARY_NAV_ITEMS.map(renderNavItem)}
+          </div>
         </nav>
 
-        <nav className="space-y-1 border-t p-3" aria-label="Workspace" style={{ borderColor: "var(--border)" }}>
+        <nav className="space-y-2 border-t p-3" aria-label="Workspace" style={{ borderColor: "var(--border)" }}>
           {SECONDARY_NAV_ITEMS.map(renderNavItem)}
           <button
             type="button"
             onClick={onToggleDarkMode}
             title={collapsed ? "Dark mode" : undefined}
-            className={`flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)] ${
+            className={`flex h-10 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)] ${
               collapsed ? "justify-center px-2" : ""
             }`}
             aria-pressed={darkMode}

@@ -1,10 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { BookOpenCheck, ClipboardCheck, Lightbulb, Save, type LucideIcon } from "lucide-react";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
 import { toDateKey } from "../../utils";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
+import { EmptyState } from "../ui/EmptyState";
+
+const DETAIL_FIELDS = [
+  "wins",
+  "losses",
+  "lessons",
+  "habits",
+  "productivity",
+  "focus",
+  "nextWeekPlan",
+] as const;
 
 export function ReviewsView({ actions }: { actions: MomentumActions }) {
   const [quick, setQuick] = useState("");
@@ -22,15 +34,37 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
 
   return (
     <PageContainer className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Surface className="space-y-3">
-          <h2 className="text-lg font-semibold text-[var(--text)]">Quick Review</h2>
+      <Surface className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]" padding="lg">
+        <div>
+          <span className="section-label">Weekly Review</span>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--text)] sm:text-4xl">
+            Close the week with signal, not guilt.
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 muted-text">
+            Capture wins, lessons, focus quality, and next week&apos;s plan in a calm guided flow.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <ReviewCue icon={BookOpenCheck} label="Wins" value="What worked?" />
+          <ReviewCue icon={Lightbulb} label="Lessons" value="What changed?" />
+          <ReviewCue icon={ClipboardCheck} label="Plan" value="What is next?" />
+        </div>
+      </Surface>
+
+      <div className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+        <Surface className="space-y-4">
+          <div>
+            <span className="section-label">Quick Review</span>
+            <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">
+              One prompt reflection
+            </h3>
+          </div>
           <textarea
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
-            rows={5}
+            rows={7}
             placeholder="What mattered most this week?"
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            className="input-shell w-full resize-y rounded-2xl px-4 py-3 text-sm placeholder:text-[var(--muted-soft)]"
           />
           <button
             type="button"
@@ -50,25 +84,36 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
               });
               setQuick("");
             }}
-            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white"
           >
+            <Save className="h-4 w-4" />
             Save quick review
           </button>
         </Surface>
 
-        <Surface className="space-y-3">
-          <h2 className="text-lg font-semibold text-[var(--text)]">Detailed Review</h2>
-          <div className="grid gap-2">
-            {Object.entries(details).map(([key, value]) => (
-              <input
-                key={key}
-                value={value}
-                onChange={(e) =>
-                  setDetails((current) => ({ ...current, [key]: e.target.value }))
-                }
-                placeholder={labelFor(key)}
-                className="min-h-10 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-              />
+        <Surface className="space-y-4">
+          <div>
+            <span className="section-label">Detailed Review</span>
+            <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">
+              Guided weekly retrospective
+            </h3>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {DETAIL_FIELDS.map((key) => (
+              <label key={key} className={key === "nextWeekPlan" ? "md:col-span-2" : ""}>
+                <span className="text-xs font-semibold uppercase tracking-[0.12em] soft-text">
+                  {labelFor(key)}
+                </span>
+                <textarea
+                  value={details[key]}
+                  onChange={(e) =>
+                    setDetails((current) => ({ ...current, [key]: e.target.value }))
+                  }
+                  rows={key === "nextWeekPlan" ? 4 : 3}
+                  placeholder={promptFor(key)}
+                  className="input-shell mt-2 w-full resize-y rounded-2xl px-4 py-3 text-sm placeholder:text-[var(--muted-soft)]"
+                />
+              </label>
             ))}
           </div>
           <button
@@ -90,30 +135,64 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
                 nextWeekPlan: "",
               });
             }}
-            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white"
           >
+            <Save className="h-4 w-4" />
             Save detailed review
           </button>
         </Surface>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-[var(--text)]">Review History</h2>
-        {actions.store.reviews.map((review) => (
-          <Surface key={review.id} padding="sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-[var(--text)]">
-                {review.type === "quick" ? "Quick Review" : "Detailed Review"}
-              </p>
-              <span className="text-xs soft-text">{review.weekKey}</span>
-            </div>
-            <p className="mt-2 text-sm muted-text">
-              {review.prompt || review.nextWeekPlan || review.wins}
-            </p>
-          </Surface>
-        ))}
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Review History</h3>
+          <span className="text-sm muted-text">{actions.store.reviews.length} entries</span>
+        </div>
+        {actions.store.reviews.length === 0 ? (
+          <EmptyState
+            icon="R"
+            title="No reviews yet"
+            hint="Save a quick or detailed review to build a searchable history of your weekly operating rhythm."
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {actions.store.reviews.map((review) => (
+              <Surface key={review.id} padding="sm" className="card-hover">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-[var(--text)]">
+                    {review.type === "quick" ? "Quick Review" : "Detailed Review"}
+                  </p>
+                  <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-xs soft-text">
+                    {review.weekKey}
+                  </span>
+                </div>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 muted-text">
+                  {review.prompt || review.nextWeekPlan || review.wins}
+                </p>
+              </Surface>
+            ))}
+          </div>
+        )}
       </section>
     </PageContainer>
+  );
+}
+
+function ReviewCue({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+      <Icon className="h-5 w-5 accent-text" />
+      <p className="mt-3 text-sm font-semibold text-[var(--text)]">{label}</p>
+      <p className="mt-1 text-xs muted-text">{value}</p>
+    </div>
   );
 }
 
@@ -121,4 +200,17 @@ function labelFor(key: string) {
   return key
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (char) => char.toUpperCase());
+}
+
+function promptFor(key: string) {
+  const prompts: Record<string, string> = {
+    wins: "What moved forward?",
+    losses: "What drained time or energy?",
+    lessons: "What did this week teach you?",
+    habits: "Which habits helped or hurt?",
+    productivity: "How did your systems perform?",
+    focus: "When were you most focused?",
+    nextWeekPlan: "What should next week protect, ship, or simplify?",
+  };
+  return prompts[key] ?? "Write your reflection";
 }

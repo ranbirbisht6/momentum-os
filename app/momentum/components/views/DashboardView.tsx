@@ -2,25 +2,38 @@
 
 import { memo, useMemo } from "react";
 import {
-  Calendar,
-  ChevronRight,
+  ArrowUpRight,
+  CalendarClock,
+  CheckCircle2,
   Flame,
-  Layers,
-  Rocket,
+  Plus,
+  Sparkles,
   Target,
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
+import { dailyChart } from "../../analytics";
 import { buildAssistantInsights } from "../../lib/assistant";
-import { getRecentCategories } from "../../lib/dashboard";
 import { resolveUserName } from "../../lib/user";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
-import { categoryProgress, pickTodayFocus } from "../../utils";
-import { AIAssistantCard } from "../AIAssistantCard";
+import type { DailyCategory, Goal, TabId } from "../../types";
+import {
+  categoryIsComplete,
+  categoryProgress,
+  formatDateLabel,
+  parseDateKey,
+  toDateKey,
+} from "../../utils";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
 
-function DashboardViewInner({ actions }: { actions: MomentumActions }) {
+function DashboardViewInner({
+  actions,
+  onNavigate,
+}: {
+  actions: MomentumActions;
+  onNavigate?: (tab: TabId) => void;
+}) {
   const {
     hydrated,
     todayKey,
@@ -28,7 +41,6 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
     currentYear,
     store,
     todayProgress,
-    todayCategories,
   } = actions;
 
   const userName = useMemo(
@@ -42,11 +54,6 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
         ? buildAssistantInsights(store, todayKey, currentMonthKey, userName)
         : null,
     [hydrated, store, todayKey, currentMonthKey, userName],
-  );
-
-  const focus = useMemo(
-    () => (hydrated ? pickTodayFocus(todayCategories) : null),
-    [hydrated, todayCategories],
   );
 
   const monthProgress = useMemo(
@@ -65,159 +72,262 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
     [store.annualCategories, currentYear],
   );
 
-  const recent = useMemo(
-    () => (hydrated ? getRecentCategories(todayCategories) : []),
-    [hydrated, todayCategories],
+  const weekly = useMemo(() => dailyChart(store, 7), [store]);
+  const upcoming = useMemo(() => getUpcomingTasks(store.dailyCategories), [store.dailyCategories]);
+  const activeGoals = useMemo(() => store.goals.slice(0, 3), [store.goals]);
+  const calendarPreview = useMemo(() => getCalendarPreview(store.dailyCategories), [store.dailyCategories]);
+  const productivityScore = Math.round(
+    todayProgress.percent * 0.45 + monthProgress.percent * 0.3 + yearProgress.percent * 0.25,
   );
 
   return (
-    <PageContainer className="space-y-8">
-      {insight && <AIAssistantCard insight={insight} />}
-
-      <Surface>
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
-            <Target className="h-5 w-5 accent-text" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wider soft-text">
-              Today&apos;s focus
-            </p>
-            {focus ? (
-              <>
-                <p className="mt-2 text-lg font-semibold text-[var(--text)]">
-                  {focus.categoryTitle}
-                </p>
-                <p className="mt-1 text-sm accent-text">{focus.subtaskTitle}</p>
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-xs muted-text">
-                    <span>Completion</span>
-                    <span>{focus.percent}%</span>
-                  </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-soft)]">
-                    <div
-                      className="h-full rounded-full bg-[var(--accent)] transition-all"
-                      style={{ width: `${focus.percent}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs soft-text">Next pending task</p>
-                </div>
-              </>
-            ) : (
-              <p className="mt-2 text-sm muted-text">
-                {hydrated ? "All caught up for today." : "Loading..."}
+    <PageContainer className="space-y-6">
+      <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+        <Surface className="overflow-hidden" padding="lg">
+          <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="section-label">Momentum OS V3</span>
+              <h2 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--text)] sm:text-5xl">
+                Your productivity command center.
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-6 muted-text">
+                Plan today, protect focus, watch goals move, and keep team work visible from one calm operating surface.
               </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate?.("today")}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--accent-strong)]"
+            >
+              <Plus className="h-4 w-4" />
+              Quick Add
+            </button>
+          </div>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <MetricTile label="Today's Progress" value={`${todayProgress.percent}%`} helper={`${todayProgress.completed}/${todayProgress.total} complete`} />
+            <MetricTile label="Weekly Score" value={`${productivityScore}`} helper="Momentum score" />
+            <MetricTile label="Streak" value={`${hydrated ? store.streak.currentStreak : 0}`} helper={`Best ${hydrated ? store.streak.bestStreak : 0} days`} />
+          </div>
+        </Surface>
+
+        <Surface className="flex flex-col justify-between gap-6" padding="lg">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="section-label">Today</span>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text)]">
+                {formatDateLabel(todayKey)}
+              </h3>
+            </div>
+            <div
+              className="grid h-24 w-24 place-items-center rounded-full text-center"
+              style={{
+                background: `conic-gradient(var(--accent) ${todayProgress.percent}%, var(--surface-soft) 0)`,
+              }}
+            >
+              <div className="grid h-20 w-20 place-items-center rounded-full bg-[var(--surface)]">
+                <span className="stat-value text-2xl font-semibold text-[var(--text)]">
+                  {todayProgress.percent}%
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <TinyStat label="Tasks" value={todayProgress.total} />
+            <TinyStat label="Done" value={todayProgress.completed} />
+            <TinyStat label="Open" value={todayProgress.pending} />
+          </div>
+        </Surface>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr_0.9fr]">
+        <Surface className="space-y-4">
+          <SectionHead icon={CalendarClock} title="Upcoming Tasks" action="Today" />
+          <div className="space-y-3">
+            {upcoming.length > 0 ? (
+              upcoming.map((task) => <TaskRow key={task.id} task={task} />)
+            ) : (
+              <SoftEmpty title="No scheduled tasks" hint="Add a task in Today or drag one onto Calendar." />
             )}
           </div>
-        </div>
-      </Surface>
+        </Surface>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <ProgressCard
-          icon={Calendar}
-          label="Today"
-          completed={hydrated ? todayProgress.completed : 0}
-          total={hydrated ? todayProgress.total : 0}
-          percent={hydrated ? todayProgress.percent : 0}
-        />
-        <ProgressCard
-          icon={TrendingUp}
-          label="Month"
-          completed={hydrated ? monthProgress.completed : 0}
-          total={hydrated ? monthProgress.total : 0}
-          percent={hydrated ? monthProgress.percent : 0}
-        />
-        <ProgressCard
-          icon={Rocket}
-          label="Year"
-          completed={hydrated ? yearProgress.completed : 0}
-          total={hydrated ? yearProgress.total : 0}
-          percent={hydrated ? yearProgress.percent : 0}
-        />
-      </div>
-
-      {recent.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 soft-text" />
-            <h2 className="text-sm font-semibold text-[var(--text)]">
-              Recent tasks
-            </h2>
+        <Surface className="space-y-4">
+          <SectionHead icon={Target} title="Active Goals" action={`${store.goals.length} total`} />
+          <div className="space-y-3">
+            {activeGoals.length > 0 ? (
+              activeGoals.map((goal) => <GoalRow key={goal.id} goal={goal} />)
+            ) : (
+              <SoftEmpty title="No goals yet" hint="Create a goal and Momentum will break it into milestones." />
+            )}
           </div>
-          <Surface padding="none" className="divide-y divide-[var(--border)]">
-            {recent.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex items-center justify-between px-5 py-4 sm:px-6"
-              >
-                <div>
-                  <p className="text-sm font-medium text-[var(--text)]">
-                    {cat.title}
-                  </p>
-                  <p className="mt-0.5 text-xs muted-text">
-                    {cat.completed}/{cat.total} completed
-                  </p>
+        </Surface>
+
+        <Surface className="space-y-4">
+          <SectionHead icon={Sparkles} title="AI Insights" action="Local" />
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+            <p className="text-sm font-semibold text-[var(--text)]">
+              {insight?.suggestedNextAction ?? "Protect one deep work block today."}
+            </p>
+            <ul className="mt-3 space-y-2 text-sm muted-text">
+              {(insight?.recommendations ?? ["Review one goal", "Schedule one priority task"]).slice(0, 3).map((item) => (
+                <li key={item} className="flex gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 accent-text" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Surface>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Surface className="space-y-5">
+          <SectionHead icon={TrendingUp} title="Weekly Progress" action={`${monthProgress.percent}% month`} />
+          <div className="flex h-48 items-end gap-3">
+            {weekly.map((day) => (
+              <div key={day.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <div className="flex h-36 w-full items-end rounded-2xl bg-[var(--surface-soft)] p-1">
+                  <div
+                    className="w-full rounded-xl bg-[var(--accent)] transition-all"
+                    style={{ height: `${Math.max(6, day.percent)}%` }}
+                  />
                 </div>
-                <ChevronRight className="h-4 w-4 soft-text" />
+                <span className="text-xs soft-text">{day.label}</span>
               </div>
             ))}
-          </Surface>
-        </section>
-      )}
+          </div>
+        </Surface>
 
-      <Surface className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
-            <Flame className="h-6 w-6 accent-text" />
+        <Surface className="space-y-5">
+          <SectionHead icon={Flame} title="Calendar Preview" action="Next 7 days" />
+          <div className="grid gap-3 sm:grid-cols-7">
+            {calendarPreview.map((day) => (
+              <div key={day.key} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+                <p className="text-xs font-semibold soft-text">{day.label}</p>
+                <p className="mt-1 text-2xl font-semibold text-[var(--text)]">{day.date}</p>
+                <p className="mt-3 text-xs muted-text">{day.count} tasks</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider soft-text">
-              Current streak
-            </p>
-            <p className="text-2xl font-semibold tabular-nums text-[var(--text)]">
-              {hydrated ? store.streak.currentStreak : "-"}{" "}
-              <span className="text-base font-normal muted-text">days</span>
-            </p>
-          </div>
-        </div>
-        <p className="text-xs muted-text">
-          Best {hydrated ? store.streak.bestStreak : "-"} days
-        </p>
-      </Surface>
+        </Surface>
+      </section>
     </PageContainer>
   );
 }
 
-function ProgressCard({
+function MetricTile({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] soft-text">{label}</p>
+      <p className="stat-value mt-3 text-3xl font-semibold text-[var(--text)]">{value}</p>
+      <p className="mt-1 text-xs muted-text">{helper}</p>
+    </div>
+  );
+}
+
+function TinyStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-center">
+      <p className="stat-value text-xl font-semibold text-[var(--text)]">{value}</p>
+      <p className="text-xs soft-text">{label}</p>
+    </div>
+  );
+}
+
+function SectionHead({
   icon: Icon,
-  label,
-  completed,
-  total,
-  percent,
+  title,
+  action,
 }: {
   icon: LucideIcon;
-  label: string;
-  completed: number;
-  total: number;
-  percent: number;
+  title: string;
+  action: string;
 }) {
   return (
-    <div className="surface rounded-xl border px-4 py-4">
+    <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 accent-text" />
-        <p className="text-xs font-medium muted-text">{label}</p>
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--accent-soft)]">
+          <Icon className="h-4 w-4 accent-text" />
+        </div>
+        <h3 className="text-base font-semibold text-[var(--text)]">{title}</h3>
       </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums text-[var(--text)]">
-        {completed}/{total}
-      </p>
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--surface-soft)]">
-        <div
-          className="h-full rounded-full bg-[var(--accent)]"
-          style={{ width: `${percent}%` }}
-        />
+      <span className="rounded-full border border-[var(--border)] px-2.5 py-1 text-xs soft-text">
+        {action}
+      </span>
+    </div>
+  );
+}
+
+function TaskRow({ task }: { task: DailyCategory }) {
+  const complete = categoryIsComplete(task);
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+      <div className="min-w-0">
+        <p className={`truncate text-sm font-semibold ${complete ? "text-[var(--muted-soft)] line-through" : "text-[var(--text)]"}`}>
+          {task.title}
+        </p>
+        <p className="mt-1 text-xs muted-text">
+          {parseDateKey(task.dateKey).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+          {task.scheduledAt ? ` at ${task.scheduledAt}` : " anytime"}
+        </p>
+      </div>
+      <ArrowUpRight className="h-4 w-4 shrink-0 soft-text" />
+    </div>
+  );
+}
+
+function GoalRow({ goal }: { goal: Goal }) {
+  const total = goal.milestones.length;
+  const done = goal.milestones.filter((milestone) => milestone.completed).length;
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[var(--text)]">{goal.title}</p>
+          <p className="mt-1 text-xs muted-text">{goal.category}</p>
+        </div>
+        <span className="text-xs font-semibold accent-text">{percent}%</span>
+      </div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--surface)]">
+        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );
+}
+
+function SoftEmpty({ title, hint }: { title: string; hint: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-soft)] p-5 text-center">
+      <p className="text-sm font-semibold text-[var(--text)]">{title}</p>
+      <p className="mt-1 text-xs leading-5 muted-text">{hint}</p>
+    </div>
+  );
+}
+
+function getUpcomingTasks(tasks: DailyCategory[]) {
+  const today = toDateKey(new Date());
+  return [...tasks]
+    .filter((task) => task.dateKey >= today)
+    .sort((a, b) => `${a.dateKey}${a.scheduledAt ?? ""}`.localeCompare(`${b.dateKey}${b.scheduledAt ?? ""}`))
+    .slice(0, 5);
+}
+
+function getCalendarPreview(tasks: DailyCategory[]) {
+  const today = new Date();
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + index);
+    const key = toDateKey(date);
+    return {
+      key,
+      label: date.toLocaleDateString(undefined, { weekday: "short" }),
+      date: date.getDate(),
+      count: tasks.filter((task) => task.dateKey === key).length,
+    };
+  });
 }
 
 export const DashboardView = memo(DashboardViewInner);

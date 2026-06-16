@@ -75,7 +75,7 @@ function CategorySectionInner({
   return (
     <>
       <article
-        className={`surface rounded-xl border p-5 transition sm:p-6 ${
+        className={`premium-card card-hover rounded-2xl p-5 transition sm:p-6 ${
           completed ? "opacity-80" : ""
         }`}
       >
@@ -168,7 +168,7 @@ function CategorySectionInner({
                   {category.deadline ? ` - Due ${category.deadline}` : ""}
                 </p>
                 {progress.total > 0 && (
-                  <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--surface-soft)]">
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--surface-soft)]">
                     <div
                       className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
                       style={{ width: `${progress.percent}%` }}
@@ -184,7 +184,7 @@ function CategorySectionInner({
               <button
                 type="button"
                 onClick={onEditCategory}
-                className="rounded-lg p-2 soft-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
+                  className="rounded-xl p-2 soft-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
                 aria-label="Edit category"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -193,7 +193,7 @@ function CategorySectionInner({
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="rounded-lg p-2 soft-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--danger)]"
+              className="rounded-xl p-2 soft-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--danger)]"
               aria-label="Delete category"
             >
               <Trash2 className="h-4 w-4" />
@@ -207,7 +207,7 @@ function CategorySectionInner({
               {category.subtasks.map((task) => (
                 <li key={task.id}>
                   <div
-                    className={`group flex items-center gap-3 rounded-lg py-2 pr-1 transition-colors ${
+                    className={`group flex items-center gap-3 rounded-xl py-2 pr-1 transition-colors ${
                       flashTaskId === task.id
                         ? "bg-[var(--accent-soft)]"
                         : "hover:bg-[var(--surface-soft)]"
@@ -254,12 +254,12 @@ function CategorySectionInner({
                 value={newTaskValue}
                 onChange={(e) => onNewTaskChange(e.target.value)}
                 placeholder="Add subtask"
-                className="h-9 flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)]"
+                className="input-shell h-9 flex-1 rounded-xl px-3 text-sm placeholder:text-[var(--muted-soft)]"
               />
               <button
                 type="submit"
                 disabled={!newTaskValue.trim()}
-                className="flex h-9 items-center gap-1 rounded-lg bg-[var(--accent)] px-3 text-xs font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-40"
+                className="flex h-9 items-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-xs font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-40"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add
