@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Activity, Briefcase, CheckCircle2, Users, type LucideIcon } from "lucide-react";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
-import type { DailyCategory, TeamMember, WorkspaceKind } from "../../types";
+import type { DailyCategory, TeamMember, TeamRole, WorkspaceKind } from "../../types";
 import { categoryIsComplete, categoryProgress } from "../../utils";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
@@ -16,9 +16,20 @@ const KINDS: { value: WorkspaceKind; label: string }[] = [
   { value: "department", label: "Department" },
 ];
 
+const ROLES: { value: TeamRole; label: string }[] = [
+  { value: "owner", label: "Owner" },
+  { value: "admin", label: "Admin" },
+  { value: "manager", label: "Manager" },
+  { value: "member", label: "Member" },
+];
+
 export function TeamView({ actions }: { actions: MomentumActions }) {
   const workspace = actions.store.teamWorkspace;
   const [name, setName] = useState(workspace.name);
+  const [memberName, setMemberName] = useState("");
+  const [memberRole, setMemberRole] = useState<TeamRole>("member");
+  const [projectTitle, setProjectTitle] = useState("");
+  const [projectDeadline, setProjectDeadline] = useState("");
   const todayTasks = actions.todayCategories;
   const progress = categoryProgress(todayTasks);
   const memberMap = useMemo(
@@ -104,6 +115,41 @@ export function TeamView({ actions }: { actions: MomentumActions }) {
 
         <Surface className="space-y-4">
           <SectionTitle icon={Users} title="Members" subtitle={`${workspace.kind} mode`} />
+          <div className="grid gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3 sm:grid-cols-[1fr_9rem_auto]">
+            <input
+              value={memberName}
+              onChange={(e) => setMemberName(e.target.value)}
+              placeholder="Member name"
+              className="input-shell min-h-10 rounded-xl px-3 text-sm"
+            />
+            <select
+              value={memberRole}
+              onChange={(e) => setMemberRole(e.target.value as TeamRole)}
+              className="input-shell min-h-10 rounded-xl px-3 text-sm"
+            >
+              {ROLES.map((role) => (
+                <option key={role.value} value={role.value}>{role.label}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                const trimmed = memberName.trim();
+                if (!trimmed) return;
+                actions.updateTeamWorkspace({
+                  members: [
+                    ...workspace.members,
+                    { id: crypto.randomUUID(), name: trimmed, role: memberRole },
+                  ],
+                });
+                setMemberName("");
+                setMemberRole("member");
+              }}
+              className="min-h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+            >
+              Add
+            </button>
+          </div>
           {workspace.members.length === 0 ? (
             <EmptyState icon="M" title="No members yet" hint="Members can be connected after authentication and invitations are added." />
           ) : (
@@ -119,6 +165,44 @@ export function TeamView({ actions }: { actions: MomentumActions }) {
       <div className="grid gap-5 xl:grid-cols-[1fr_0.85fr]">
         <Surface className="space-y-4">
           <SectionTitle icon={Briefcase} title="Projects" subtitle="Deadlines and progress" />
+          <div className="grid gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-3 sm:grid-cols-[1fr_11rem_auto]">
+            <input
+              value={projectTitle}
+              onChange={(e) => setProjectTitle(e.target.value)}
+              placeholder="Project title"
+              className="input-shell min-h-10 rounded-xl px-3 text-sm"
+            />
+            <input
+              type="date"
+              min={actions.todayKey}
+              value={projectDeadline}
+              onChange={(e) => setProjectDeadline(e.target.value)}
+              className="input-shell min-h-10 rounded-xl px-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const trimmed = projectTitle.trim();
+                if (!trimmed) return;
+                actions.updateTeamWorkspace({
+                  projects: [
+                    ...workspace.projects,
+                    {
+                      id: crypto.randomUUID(),
+                      title: trimmed,
+                      deadline: projectDeadline,
+                      progress: 0,
+                    },
+                  ],
+                });
+                setProjectTitle("");
+                setProjectDeadline("");
+              }}
+              className="min-h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+            >
+              Add
+            </button>
+          </div>
           {workspace.projects.length === 0 ? (
             <EmptyState icon="P" title="No projects yet" hint="Project creation can expand here once team backend support is added." />
           ) : (

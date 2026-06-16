@@ -135,24 +135,7 @@ export const DEFAULT_TEAM_WORKSPACE: TeamWorkspace = {
   id: "local-team",
   name: "Momentum Workspace",
   kind: "startup",
-  members: [
-    { id: "owner", name: "You", role: "owner" },
-    { id: "ops", name: "Ops Lead", role: "manager" },
-    { id: "builder", name: "Builder", role: "member" },
-  ],
-  projects: [
-    {
-      id: "launch",
-      title: "Launch Plan",
-      deadline: "",
-      progress: 42,
-    },
-  ],
-  activity: [
-    {
-      id: "activity-1",
-      message: "Workspace created locally. Invite flow can connect after auth.",
-      createdAt: 0,
-    },
-  ],
+  members: [],
+  projects: [],
+  activity: [],
 };

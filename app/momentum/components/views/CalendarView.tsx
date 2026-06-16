@@ -7,8 +7,11 @@ import {
   ChevronRight,
   Clock3,
   GripVertical,
+  RefreshCcw,
+  Bell,
 } from "lucide-react";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
+import { useToast } from "../../hooks/useToast";
 import type { CalendarMode, DailyCategory } from "../../types";
 import { categoryIsComplete, toDateKey } from "../../utils";
 import { PageContainer } from "../design/PageContainer";
@@ -24,8 +27,10 @@ const MODES: { value: CalendarMode; label: string }[] = [
 const HOURS = ["8 AM", "10 AM", "12 PM", "2 PM", "4 PM", "6 PM"];
 
 export function CalendarView({ actions }: { actions: MomentumActions }) {
+  const toast = useToast();
   const [mode, setMode] = useState<CalendarMode>("week");
   const [anchor, setAnchor] = useState(() => new Date());
+  const todayKey = toDateKey(new Date());
 
   const visibleDays = useMemo(() => getVisibleDays(anchor, mode), [anchor, mode]);
   const tasksByDate = useMemo(() => {
@@ -48,6 +53,15 @@ export function CalendarView({ actions }: { actions: MomentumActions }) {
       else next.setDate(next.getDate() + amount * (mode === "day" ? 1 : 7));
       return next;
     });
+  };
+
+  const moveTask = (taskId: string, dateKey: string) => {
+    if (dateKey < todayKey) {
+      toast.error("Cannot schedule work in the past");
+      return;
+    }
+    const moved = actions.moveDailyCategory(taskId, dateKey);
+    if (moved) toast.success("Task scheduled");
   };
 
   return (
@@ -103,7 +117,7 @@ export function CalendarView({ actions }: { actions: MomentumActions }) {
         <DaySchedule
           date={visibleDays[0]}
           tasks={tasksByDate.get(toDateKey(visibleDays[0])) ?? []}
-          onDropTask={(taskId, dateKey) => actions.moveDailyCategory(taskId, dateKey)}
+          onDropTask={moveTask}
         />
       ) : (
         <div
@@ -121,7 +135,8 @@ export function CalendarView({ actions }: { actions: MomentumActions }) {
                 date={date}
                 tasks={tasks}
                 muted={mode === "month" && !isCurrentMonth}
-                onDropTask={(taskId) => actions.moveDailyCategory(taskId, key)}
+                past={key < todayKey}
+                onDropTask={(taskId) => moveTask(taskId, key)}
               />
             );
           })}
@@ -135,11 +150,13 @@ function DayColumn({
   date,
   tasks,
   muted,
+  past,
   onDropTask,
 }: {
   date: Date;
   tasks: DailyCategory[];
   muted?: boolean;
+  past?: boolean;
   onDropTask: (taskId: string) => void;
 }) {
   return (
@@ -160,7 +177,7 @@ function DayColumn({
             <p className="mt-1 text-3xl font-semibold text-[var(--text)]">{date.getDate()}</p>
           </div>
           <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-xs muted-text">
-            {tasks.length}
+            {past ? "Past" : tasks.length}
           </span>
         </div>
         <div className="mt-4 space-y-2">
@@ -173,7 +190,7 @@ function DayColumn({
         </div>
         {tasks.length === 0 && (
           <div className="mt-4 grid flex-1 place-items-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center text-xs muted-text">
-            Drop tasks here
+            {past ? "Read-only" : "Drop tasks here"}
           </div>
         )}
       </div>
@@ -229,11 +246,18 @@ function DaySchedule({
 
 function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean }) {
   const complete = categoryIsComplete(task);
+  const colorClass = task.priority === "critical"
+    ? "border-l-red-500"
+    : task.priority === "high"
+      ? "border-l-amber-500"
+      : task.priority === "low"
+        ? "border-l-emerald-600"
+        : "border-l-stone-400";
   return (
     <div
       draggable
       onDragStart={(event) => event.dataTransfer.setData("text/task-id", task.id)}
-      className={`mb-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 text-xs shadow-sm transition hover:border-[var(--accent)] ${
+      className={`mb-2 rounded-2xl border border-l-4 border-[var(--border)] bg-[var(--surface)] p-3 text-xs shadow-sm transition hover:border-[var(--accent)] ${colorClass} ${
         complete ? "opacity-60" : ""
       } ${wide ? "flex items-center justify-between gap-3" : ""}`}
     >
@@ -244,10 +268,21 @@ function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean 
             {task.title}
           </p>
         </div>
-        <p className="mt-2 flex items-center gap-1 muted-text">
+        <p className="mt-2 flex flex-wrap items-center gap-2 muted-text">
           <Clock3 className="h-3.5 w-3.5" />
-          {task.scheduledAt || "Anytime"}
-          {task.reminder.offset !== "none" ? ` / ${task.reminder.offset}` : ""}
+          <span>{task.scheduledAt || "Anytime"}</span>
+          {task.reminder.offset !== "none" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 accent-text">
+              <Bell className="h-3 w-3" />
+              {task.reminder.offset}
+            </span>
+          )}
+          {task.recurrence.frequency !== "none" && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-soft)] px-2 py-0.5">
+              <RefreshCcw className="h-3 w-3" />
+              {task.recurrence.frequency}
+            </span>
+          )}
         </p>
       </div>
     </div>

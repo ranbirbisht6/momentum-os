@@ -29,8 +29,14 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
     focus: "",
     nextWeekPlan: "",
   });
+  const [monthly, setMonthly] = useState({
+    progressSummary: "",
+    goalsAchieved: "",
+    productivityScore: "",
+  });
 
   const weekKey = toDateKey(new Date()).slice(0, 10);
+  const monthKey = toDateKey(new Date()).slice(0, 7);
 
   return (
     <PageContainer className="space-y-6">
@@ -143,6 +149,63 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
         </Surface>
       </div>
 
+      <Surface className="space-y-4">
+        <div>
+          <span className="section-label">Monthly Review</span>
+          <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">
+            Progress summary and productivity score
+          </h3>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_12rem]">
+          <textarea
+            value={monthly.progressSummary}
+            onChange={(e) => setMonthly((current) => ({ ...current, progressSummary: e.target.value }))}
+            rows={4}
+            placeholder="Progress Summary"
+            className="input-shell w-full resize-y rounded-2xl px-4 py-3 text-sm placeholder:text-[var(--muted-soft)]"
+          />
+          <textarea
+            value={monthly.goalsAchieved}
+            onChange={(e) => setMonthly((current) => ({ ...current, goalsAchieved: e.target.value }))}
+            rows={4}
+            placeholder="Goals Achieved"
+            className="input-shell w-full resize-y rounded-2xl px-4 py-3 text-sm placeholder:text-[var(--muted-soft)]"
+          />
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={monthly.productivityScore}
+            onChange={(e) => setMonthly((current) => ({ ...current, productivityScore: e.target.value }))}
+            placeholder="Score"
+            className="input-shell min-h-12 rounded-2xl px-4 text-sm"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (!monthly.progressSummary.trim() && !monthly.goalsAchieved.trim() && !monthly.productivityScore.trim()) return;
+            actions.addWeeklyReview({
+              type: "monthly",
+              weekKey: monthKey,
+              prompt: "Monthly review",
+              wins: monthly.goalsAchieved,
+              losses: "",
+              lessons: monthly.progressSummary,
+              habits: "",
+              productivity: monthly.productivityScore,
+              focus: "",
+              nextWeekPlan: "",
+            });
+            setMonthly({ progressSummary: "", goalsAchieved: "", productivityScore: "" });
+          }}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white"
+        >
+          <Save className="h-4 w-4" />
+          Save monthly review
+        </button>
+      </Surface>
+
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-lg font-semibold text-[var(--text)]">Review History</h3>
@@ -160,7 +223,11 @@ export function ReviewsView({ actions }: { actions: MomentumActions }) {
               <Surface key={review.id} padding="sm" className="card-hover">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-[var(--text)]">
-                    {review.type === "quick" ? "Quick Review" : "Detailed Review"}
+                    {review.type === "quick"
+                      ? "Quick Review"
+                      : review.type === "monthly"
+                        ? "Monthly Review"
+                        : "Detailed Review"}
                   </p>
                   <span className="rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-xs soft-text">
                     {review.weekKey}

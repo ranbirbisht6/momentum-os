@@ -3,9 +3,11 @@
 import { memo, useMemo } from "react";
 import {
   ArrowUpRight,
+  BookOpenCheck,
   CalendarClock,
   CheckCircle2,
   Flame,
+  PenLine,
   Plus,
   Sparkles,
   Target,
@@ -76,6 +78,13 @@ function DashboardViewInner({
   const upcoming = useMemo(() => getUpcomingTasks(store.dailyCategories), [store.dailyCategories]);
   const activeGoals = useMemo(() => store.goals.slice(0, 3), [store.goals]);
   const calendarPreview = useMemo(() => getCalendarPreview(store.dailyCategories), [store.dailyCategories]);
+  const isEmptyWorkspace =
+    store.dailyCategories.length === 0 &&
+    store.monthlyCategories.length === 0 &&
+    store.annualCategories.length === 0 &&
+    store.goals.length === 0 &&
+    store.reviews.length === 0 &&
+    store.journalEntries.length === 0;
   const productivityScore = Math.round(
     todayProgress.percent * 0.45 + monthProgress.percent * 0.3 + yearProgress.percent * 0.25,
   );
@@ -140,6 +149,21 @@ function DashboardViewInner({
         </Surface>
       </section>
 
+      {isEmptyWorkspace && (
+        <Surface className="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <span className="section-label">Start here</span>
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text)]">
+              Your operating system is ready.
+            </h3>
+            <p className="mt-2 text-sm leading-6 muted-text">
+              Add one task, create one goal, or generate a plan to turn this dashboard from empty state into live command center.
+            </p>
+          </div>
+          <QuickActions onNavigate={onNavigate} />
+        </Surface>
+      )}
+
       <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr_0.9fr]">
         <Surface className="space-y-4">
           <SectionHead icon={CalendarClock} title="Upcoming Tasks" action="Today" />
@@ -181,6 +205,13 @@ function DashboardViewInner({
         </Surface>
       </section>
 
+      {!isEmptyWorkspace && (
+        <Surface className="space-y-4">
+          <SectionHead icon={Plus} title="Quick Actions" action="Create" />
+          <QuickActions onNavigate={onNavigate} />
+        </Surface>
+      )}
+
       <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Surface className="space-y-5">
           <SectionHead icon={TrendingUp} title="Weekly Progress" action={`${monthProgress.percent}% month`} />
@@ -213,6 +244,41 @@ function DashboardViewInner({
         </Surface>
       </section>
     </PageContainer>
+  );
+}
+
+function QuickActions({ onNavigate }: { onNavigate?: (tab: TabId) => void }) {
+  const actions: { label: string; hint: string; tab: TabId; icon: LucideIcon }[] = [
+    { label: "Add Task", hint: "Plan today", tab: "today", icon: Plus },
+    { label: "Create Goal", hint: "Define outcome", tab: "goals", icon: Target },
+    { label: "AI Plan", hint: "Generate roadmap", tab: "ai-planning", icon: Sparkles },
+    { label: "Review Week", hint: "Capture signal", tab: "reviews", icon: BookOpenCheck },
+    { label: "Journal", hint: "Write clearly", tab: "journal", icon: PenLine },
+    { label: "Team", hint: "Assign work", tab: "team", icon: CalendarClock },
+  ];
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {actions.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.label}
+            type="button"
+            onClick={() => onNavigate?.(item.tab)}
+            className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-left transition hover:border-[var(--accent)] hover:bg-[var(--surface)]"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)]">
+              <Icon className="h-4 w-4 accent-text" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-[var(--text)]">{item.label}</span>
+              <span className="block text-xs muted-text">{item.hint}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

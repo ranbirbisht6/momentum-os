@@ -16,6 +16,7 @@ import type {
   ReminderOffset,
   TaskTag,
 } from "../types";
+import { toDateKey } from "../utils";
 import { Modal } from "./ui/Modal";
 import { PrimaryButton, SelectInput, TextInput } from "./ui/inputs";
 
@@ -41,6 +42,7 @@ export function NewCategoryModal({
   const [customReminderMinutes, setCustomReminderMinutes] = useState("90");
   const [scheduledAt, setScheduledAt] = useState("");
   const [deadline, setDeadline] = useState("");
+  const todayKey = toDateKey(new Date());
 
   useEffect(() => {
     if (!open) return;
@@ -243,6 +245,7 @@ export function NewCategoryModal({
             <span className="text-xs muted-text">Deadline</span>
             <input
               type="date"
+              min={todayKey}
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"

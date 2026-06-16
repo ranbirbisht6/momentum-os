@@ -108,13 +108,23 @@ function goalActions(titles: string[]) {
   }));
 }
 
-function buildGoal(title: string, description = "", category = "Personal"): Goal {
+function isPastDateKey(dateKey: string) {
+  return dateKey < toDateKey(new Date());
+}
+
+function buildGoal(
+  title: string,
+  description = "",
+  category = "Personal",
+  deadline?: string,
+): Goal {
   const normalized = title.trim() || "New goal";
   return {
     id: createId(),
     title: normalized,
     description,
     category,
+    deadline: deadline || undefined,
     createdAt: Date.now(),
     milestones: [
       {
@@ -232,6 +242,8 @@ export function useMomentumStore() {
 
   const createDailyCategory = useCallback(
     (dateKey: string, input: CreateCategoryInput) => {
+      if (isPastDateKey(dateKey)) return false;
+      if (input.deadline && input.deadline < todayKey) return false;
       const count = store.dailyCategories.filter((c) => c.dateKey === dateKey).length;
       if (count >= MAX_CATEGORIES || !input.title.trim()) return false;
       const forDate = store.dailyCategories.filter((c) => c.dateKey === dateKey);
@@ -259,7 +271,7 @@ export function useMomentumStore() {
       }));
       return true;
     },
-    [store.dailyCategories, updateStore],
+    [store.dailyCategories, todayKey, updateStore],
   );
 
   const updateDailyCategory = useCallback(
@@ -281,6 +293,7 @@ export function useMomentumStore() {
         >
       >,
     ) => {
+      if (patch.deadline && patch.deadline < todayKey) return;
       updateStore((prev) => ({
         ...prev,
         dailyCategories: prev.dailyCategories.map((c) =>
@@ -288,7 +301,7 @@ export function useMomentumStore() {
         ),
       }));
     },
-    [updateStore],
+    [todayKey, updateStore],
   );
 
   const toggleDailyCategory = useCallback(
@@ -624,6 +637,7 @@ export function useMomentumStore() {
 
   const moveDailyCategory = useCallback(
     (id: string, dateKey: string) => {
+      if (isPastDateKey(dateKey)) return false;
       updateStore((prev) => {
         const siblings = prev.dailyCategories.filter((c) => c.dateKey === dateKey);
         return {
@@ -639,16 +653,17 @@ export function useMomentumStore() {
           ),
         };
       });
+      return true;
     },
     [updateStore],
   );
 
   const createGoal = useCallback(
-    (title: string, description?: string, category?: string) => {
+    (title: string, description?: string, category?: string, deadline?: string) => {
       if (!title.trim()) return false;
       updateStore((prev) => ({
         ...prev,
-        goals: [buildGoal(title, description, category), ...prev.goals],
+        goals: [buildGoal(title, description, category, deadline), ...prev.goals],
       }));
       return true;
     },

@@ -16,7 +16,7 @@ export type ReminderOffset =
   | "1d"
   | "custom";
 export type CalendarMode = "day" | "week" | "month" | "agenda";
-export type ReviewType = "quick" | "detailed";
+export type ReviewType = "quick" | "detailed" | "monthly";
 export type JournalType = "morning" | "reflection" | "brain-dump" | "notes";
 export type WorkspaceKind = "company" | "startup" | "team" | "department";
 export type TeamRole = "owner" | "admin" | "manager" | "member";
@@ -188,6 +188,7 @@ export type Goal = {
   title: string;
   description: string;
   category: string;
+  deadline?: string;
   milestones: GoalMilestone[];
   createdAt: number;
 };

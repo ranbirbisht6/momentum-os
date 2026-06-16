@@ -11,6 +11,8 @@ import { EmptyState } from "../ui/EmptyState";
 export function GoalsView({ actions }: { actions: MomentumActions }) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Personal");
+  const [deadline, setDeadline] = useState("");
+  const todayKey = actions.todayKey;
 
   return (
     <PageContainer className="space-y-6">
@@ -39,12 +41,22 @@ export function GoalsView({ actions }: { actions: MomentumActions }) {
                 placeholder="Category"
                 className="input-shell min-h-12 rounded-2xl px-4 text-sm"
               />
+              <input
+                type="date"
+                min={todayKey}
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="input-shell min-h-12 rounded-2xl px-4 text-sm"
+              />
               <button
                 type="button"
                 onClick={() => {
-                  if (actions.createGoal(title, "", category)) setTitle("");
+                  if (actions.createGoal(title, "", category, deadline)) {
+                    setTitle("");
+                    setDeadline("");
+                  }
                 }}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] sm:col-span-2 lg:col-span-1"
               >
                 <Plus className="h-4 w-4" />
                 Create Goal
@@ -88,6 +100,7 @@ function GoalCard({
   const done = goal.milestones.filter((m) => m.completed).length;
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
   const firstMilestone = goal.milestones[0];
+  const health = goalHealth(goal, percent);
 
   return (
     <Surface className="space-y-6 card-hover">
@@ -100,6 +113,9 @@ function GoalCard({
           <p className="mt-2 text-sm muted-text">
             {done} of {total} milestones complete
           </p>
+          <p className="mt-1 text-xs soft-text">
+            {goal.deadline ? `Deadline ${goal.deadline}` : "No deadline set"}
+          </p>
         </div>
         <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)]">
           <span className="stat-value text-xl font-semibold accent-text">{percent}%</span>
@@ -107,6 +123,14 @@ function GoalCard({
       </div>
 
       <div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold accent-text">
+            {percent}% complete
+          </span>
+          <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold muted-text">
+            Health {health}%
+          </span>
+        </div>
         <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-soft)]">
           <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${percent}%` }} />
         </div>
@@ -132,6 +156,16 @@ function GoalCard({
       )}
     </Surface>
   );
+}
+
+function goalHealth(goal: Goal, percent: number) {
+  if (!goal.deadline) return Math.max(55, Math.min(95, percent + 35));
+  const now = new Date();
+  const deadline = new Date(goal.deadline);
+  const totalDays = Math.max(1, Math.ceil((deadline.getTime() - goal.createdAt) / 86400000));
+  const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / 86400000);
+  const timeProgress = Math.max(0, Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100)));
+  return Math.max(5, Math.min(100, 70 + percent - timeProgress));
 }
 
 function MilestoneCard({

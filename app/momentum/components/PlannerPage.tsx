@@ -53,6 +53,8 @@ export function PlannerPage({
   const [flashId, setFlashId] = useState<string | null>(null);
   const [editing, setEditing] = useState<CategoryData | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
+  const todayKey = actions.todayKey;
+  const isPastDailyPeriod = scope === "daily" && String(periodValue) < todayKey;
 
   const rawCategories = useMemo(() => {
     if (scope === "daily") return actions.getDailyCategories(String(periodValue));
@@ -72,6 +74,10 @@ export function PlannerPage({
 
   const saveNewCategory = (input: CreateCategoryInput) => {
     let ok = false;
+    if (isPastDailyPeriod) {
+      toast.error("Past dates are read-only");
+      return;
+    }
     if (scope === "daily") {
       ok = actions.createDailyCategory(String(periodValue), input);
     } else if (scope === "monthly") {
@@ -80,7 +86,7 @@ export function PlannerPage({
       ok = actions.createAnnualCategory(Number(periodValue), input);
     }
     if (ok) toast.success("Task saved");
-    else toast.error(`Maximum ${MAX_CATEGORIES} tasks for this period`);
+    else toast.error(`Check the date or maximum ${MAX_CATEGORIES} tasks for this period`);
   };
 
   const mapCategory = (c: AnyCategory): CategoryData => ({
@@ -131,8 +137,9 @@ export function PlannerPage({
         <button
           type="button"
           onClick={() => setShowNewCategory(true)}
-          disabled={rawCategories.length >= MAX_CATEGORIES}
+          disabled={rawCategories.length >= MAX_CATEGORIES || isPastDailyPeriod}
           className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-40"
+          title={isPastDailyPeriod ? "Past dates are read-only" : undefined}
         >
           <Plus className="h-4 w-4" />
           New task
@@ -142,6 +149,7 @@ export function PlannerPage({
       <p className="text-xs soft-text">
         {progress.completed}/{progress.total} tasks - {rawCategories.length}/
         {MAX_CATEGORIES} groups
+        {isPastDailyPeriod ? " - past dates are read-only" : ""}
       </p>
 
       <div className="relative">
@@ -160,9 +168,16 @@ export function PlannerPage({
       )}
 
       {hydrated && rawCategories.length === 0 && (
-        <p className="py-16 text-center text-sm muted-text">
-          No tasks yet. Create one to organize this period.
-        </p>
+        <div className="premium-card rounded-3xl px-6 py-14 text-center">
+          <p className="text-lg font-semibold tracking-tight text-[var(--text)]">
+            {isPastDailyPeriod ? "No tasks were planned here" : "No tasks yet"}
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 muted-text">
+            {isPastDailyPeriod
+              ? "Past days stay available for review, but new work must be scheduled today or later."
+              : "Create your first task group to organize this period."}
+          </p>
+        </div>
       )}
 
       {hydrated && categories.length > 0 && (
