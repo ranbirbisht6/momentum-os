@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Flag, Plus, Target, Trophy } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Flag, Plus, Target, Trophy } from "lucide-react";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
 import type { Goal, GoalMilestone } from "../../types";
 import { PageContainer } from "../design/PageContainer";
@@ -12,6 +12,7 @@ export function GoalsView({ actions }: { actions: MomentumActions }) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Personal");
   const [deadline, setDeadline] = useState("");
+  const [expandedGoalIds, setExpandedGoalIds] = useState<Set<string>>(new Set());
   const todayKey = actions.todayKey;
 
   return (
@@ -78,6 +79,15 @@ export function GoalsView({ actions }: { actions: MomentumActions }) {
             <GoalCard
               key={goal.id}
               goal={goal}
+              expanded={expandedGoalIds.has(goal.id)}
+              onToggleExpanded={() =>
+                setExpandedGoalIds((current) => {
+                  const next = new Set(current);
+                  if (next.has(goal.id)) next.delete(goal.id);
+                  else next.add(goal.id);
+                  return next;
+                })
+              }
               onToggle={(milestoneId) =>
                 actions.toggleGoalMilestone(goal.id, milestoneId)
               }
@@ -91,9 +101,13 @@ export function GoalsView({ actions }: { actions: MomentumActions }) {
 
 function GoalCard({
   goal,
+  expanded,
+  onToggleExpanded,
   onToggle,
 }: {
   goal: Goal;
+  expanded: boolean;
+  onToggleExpanded: () => void;
   onToggle: (milestoneId: string) => void;
 }) {
   const total = goal.milestones.length;
@@ -101,6 +115,7 @@ function GoalCard({
   const percent = total === 0 ? 0 : Math.round((done / total) * 100);
   const firstMilestone = goal.milestones[0];
   const health = goalHealth(goal, percent);
+  const days = daysRemaining(goal.deadline);
 
   return (
     <Surface className="space-y-6 card-hover">
@@ -114,7 +129,7 @@ function GoalCard({
             {done} of {total} milestones complete
           </p>
           <p className="mt-1 text-xs soft-text">
-            {goal.deadline ? `Deadline ${goal.deadline}` : "No deadline set"}
+            Target date: {goal.deadline ?? "Not set"}
           </p>
         </div>
         <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[var(--accent-soft)]">
@@ -130,6 +145,13 @@ function GoalCard({
           <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold muted-text">
             Health {health}%
           </span>
+          <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold muted-text">
+            Started {new Date(goal.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold muted-text">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {days}
+          </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-soft)]">
           <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${percent}%` }} />
@@ -141,11 +163,22 @@ function GoalCard({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {goal.milestones.map((milestone) => (
-          <MilestoneCard key={milestone.id} milestone={milestone} onToggle={onToggle} />
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={onToggleExpanded}
+        className="flex w-full items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 text-left text-sm font-semibold text-[var(--text)] transition hover:border-[var(--accent)]"
+      >
+        <span>{expanded ? "Hide milestones" : "Expand milestones"}</span>
+        <ChevronDown className={`h-4 w-4 soft-text transition ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
+      {expanded && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {goal.milestones.map((milestone) => (
+            <MilestoneCard key={milestone.id} milestone={milestone} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
 
       {firstMilestone && (
         <div className="grid gap-3 border-t border-[var(--border)] pt-5 md:grid-cols-3">
@@ -156,6 +189,17 @@ function GoalCard({
       )}
     </Surface>
   );
+}
+
+function daysRemaining(deadline?: string) {
+  if (!deadline) return "No target";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(deadline);
+  const days = Math.ceil((target.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return `${Math.abs(days)}d overdue`;
+  if (days === 0) return "Due today";
+  return `${days}d left`;
 }
 
 function goalHealth(goal: Goal, percent: number) {

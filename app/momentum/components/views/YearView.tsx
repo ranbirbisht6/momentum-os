@@ -20,14 +20,16 @@ export function YearView({
       actions={actions}
       periodValue={selectedYear}
       setPeriodValue={(v) => setSelectedYear(Number(v) || currentYear)}
-      onPrev={() => setSelectedYear(selectedYear - 1)}
+      onPrev={() => {
+        if (selectedYear > currentYear) setSelectedYear(selectedYear - 1);
+      }}
       onNext={() => setSelectedYear(selectedYear + 1)}
       onToday={() => setSelectedYear(currentYear)}
       isCurrentPeriod={selectedYear === currentYear}
       periodInput={
         <input
           type="number"
-          min={2000}
+          min={currentYear}
           max={2100}
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value) || currentYear)}

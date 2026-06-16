@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -246,6 +248,10 @@ function DaySchedule({
 
 function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean }) {
   const complete = categoryIsComplete(task);
+  const todayKey = toDateKey(new Date());
+  const overdue =
+    !complete &&
+    (task.dateKey < todayKey || (task.deadline ? task.deadline < todayKey : false));
   const colorClass = task.priority === "critical"
     ? "border-l-red-500"
     : task.priority === "high"
@@ -258,7 +264,7 @@ function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean 
       draggable
       onDragStart={(event) => event.dataTransfer.setData("text/task-id", task.id)}
       className={`mb-2 rounded-2xl border border-l-4 border-[var(--border)] bg-[var(--surface)] p-3 text-xs shadow-sm transition hover:border-[var(--accent)] ${colorClass} ${
-        complete ? "opacity-60" : ""
+        complete ? "opacity-60" : overdue ? "border-[var(--danger)]" : ""
       } ${wide ? "flex items-center justify-between gap-3" : ""}`}
     >
       <div className="min-w-0">
@@ -267,6 +273,8 @@ function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean 
           <p className={`truncate font-semibold ${complete ? "text-[var(--muted-soft)] line-through" : "text-[var(--text)]"}`}>
             {task.title}
           </p>
+          {complete && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 accent-text" />}
+          {overdue && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[var(--danger)]" />}
         </div>
         <p className="mt-2 flex flex-wrap items-center gap-2 muted-text">
           <Clock3 className="h-3.5 w-3.5" />
@@ -281,6 +289,11 @@ function TaskChip({ task, wide = false }: { task: DailyCategory; wide?: boolean 
             <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-soft)] px-2 py-0.5">
               <RefreshCcw className="h-3 w-3" />
               {task.recurrence.frequency}
+            </span>
+          )}
+          {overdue && (
+            <span className="tag-pill inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[var(--danger)]">
+              Overdue
             </span>
           )}
         </p>

@@ -16,6 +16,15 @@ import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
 
 type Experience = "beginner" | "intermediate" | "advanced";
+type PlanningCategory =
+  | "personal"
+  | "study"
+  | "startup"
+  | "career"
+  | "fitness"
+  | "finance"
+  | "health"
+  | "creative";
 
 const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
   { value: "critical", label: "Critical" },
@@ -30,22 +39,37 @@ const EXPERIENCE_OPTIONS: { value: Experience; label: string }[] = [
   { value: "advanced", label: "Advanced" },
 ];
 
+const CATEGORY_OPTIONS: { value: PlanningCategory; label: string }[] = [
+  { value: "personal", label: "Personal" },
+  { value: "study", label: "Study" },
+  { value: "startup", label: "Startup" },
+  { value: "career", label: "Career" },
+  { value: "fitness", label: "Fitness" },
+  { value: "finance", label: "Finance" },
+  { value: "health", label: "Health" },
+  { value: "creative", label: "Creative" },
+];
+
 export function AIPlanningView({ actions }: { actions: MomentumActions }) {
   const [goal, setGoal] = useState("");
+  const [category, setCategory] = useState<PlanningCategory>("personal");
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState<Priority>("high");
   const [hours, setHours] = useState("6");
   const [experience, setExperience] = useState<Experience>("intermediate");
-  const [plan, setPlan] = useState(() => buildPlan("", "high", 6, "intermediate"));
+  const [plan, setPlan] = useState(() =>
+    buildPlan("", "personal", "high", 6, "intermediate"),
+  );
   const todayKey = actions.todayKey;
 
   const metrics = useMemo(
-    () => estimatePlan(goal, deadline, priority, Number(hours) || 0, experience),
-    [goal, deadline, priority, hours, experience],
+    () =>
+      estimatePlan(goal, category, deadline, priority, Number(hours) || 0, experience),
+    [goal, category, deadline, priority, hours, experience],
   );
 
   const regenerate = () => {
-    setPlan(buildPlan(goal, priority, Number(hours) || 0, experience));
+    setPlan(buildPlan(goal, category, priority, Number(hours) || 0, experience));
   };
 
   return (
@@ -81,6 +105,18 @@ export function AIPlanningView({ actions }: { actions: MomentumActions }) {
                 placeholder="Build Startup, Learn AI, MBA Preparation..."
                 className="input-shell mt-2 min-h-12 w-full rounded-2xl px-4 text-sm placeholder:text-[var(--muted-soft)]"
               />
+            </label>
+            <label>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] soft-text">Category</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as PlanningCategory)}
+                className="input-shell mt-2 min-h-12 w-full rounded-2xl px-4 text-sm"
+              >
+                {CATEGORY_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
             </label>
             <label>
               <span className="text-xs font-semibold uppercase tracking-[0.12em] soft-text">Deadline</span>
@@ -140,7 +176,7 @@ export function AIPlanningView({ actions }: { actions: MomentumActions }) {
             <button
               type="button"
               onClick={() => {
-                if (actions.createAiPlan(goal || "AI generated plan")) {
+                if (actions.createAiPlan(goal || "AI generated plan", category, deadline)) {
                   setGoal("");
                 }
               }}
@@ -221,30 +257,37 @@ function InsightPanel({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function buildPlan(goal: string, priority: Priority, hours: number, experience: Experience) {
+function buildPlan(
+  goal: string,
+  category: PlanningCategory,
+  priority: Priority,
+  hours: number,
+  experience: Experience,
+) {
   const title = goal.trim() || "Your goal";
   const pace = hours >= 10 ? "aggressive" : hours >= 5 ? "steady" : "light";
   const depth = experience === "beginner" ? "foundation-first" : experience === "advanced" ? "execution-heavy" : "balanced";
+  const template = CATEGORY_TEMPLATES[category];
   return {
     milestones: [
       `1. Define the measurable outcome for ${title}`,
-      `2. Build a ${depth} operating system`,
-      "3. Complete the first proof of progress",
-      "4. Review, refine, and scale the plan",
+      `2. ${template.milestone}`,
+      `3. Build a ${depth} execution system`,
+      `4. ${template.proof}`,
     ].join("\n"),
     monthly: [
-      "Month 1: Clarify scope, setup routines, and complete core foundations",
+      `Month 1: ${template.monthOne}`,
       `Month 2: Execute the highest-leverage ${priority} workstreams`,
-      "Month 3: Consolidate progress, remove bottlenecks, and ship outcomes",
+      `Month 3: ${template.monthThree}`,
     ].join("\n"),
     weekly: [
-      `Plan ${pace} weekly focus blocks`,
-      "Complete one milestone slice",
+      `Plan ${pace} weekly ${template.weeklyUnit}`,
+      template.weeklyAction,
       "Review blockers, update metrics, and prepare next week",
     ].join("\n"),
     daily: [
-      "One deep work session",
-      "One small admin or follow-up action",
+      template.dailyAction,
+      template.dailyAdmin,
       "Log progress and choose tomorrow's next action",
     ].join("\n"),
   };
@@ -252,6 +295,7 @@ function buildPlan(goal: string, priority: Priority, hours: number, experience: 
 
 function estimatePlan(
   goal: string,
+  category: PlanningCategory,
   deadline: string,
   priority: Priority,
   hours: number,
@@ -267,10 +311,10 @@ function estimatePlan(
   const risks = [
     deadline ? "Deadline pressure may compress planning time." : "No deadline can reduce urgency.",
     hours < 5 ? "Available hours are low for meaningful weekly progress." : "Protect the weekly hours from meetings and admin.",
-    !goal.trim() ? "Goal clarity is still low." : "Scope creep can dilute the plan.",
+    !goal.trim() ? "Goal clarity is still low." : CATEGORY_TEMPLATES[category].risk,
   ];
   const bottlenecks = [
-    "Unclear success metric",
+    CATEGORY_TEMPLATES[category].bottleneck,
     "Too many parallel priorities",
     experience === "beginner" ? "Learning curve before execution" : "Decision fatigue during execution",
   ];
@@ -282,3 +326,116 @@ function estimatePlan(
     bottlenecks,
   };
 }
+
+const CATEGORY_TEMPLATES: Record<
+  PlanningCategory,
+  {
+    milestone: string;
+    proof: string;
+    monthOne: string;
+    monthThree: string;
+    weeklyUnit: string;
+    weeklyAction: string;
+    dailyAction: string;
+    dailyAdmin: string;
+    risk: string;
+    bottleneck: string;
+  }
+> = {
+  personal: {
+    milestone: "Clarify habits, constraints, and personal success metrics",
+    proof: "Complete a visible personal progress checkpoint",
+    monthOne: "Build routines, reduce friction, and set a tracking cadence",
+    monthThree: "Review behavior change and stabilize the system",
+    weeklyUnit: "focus blocks",
+    weeklyAction: "Complete one meaningful personal milestone slice",
+    dailyAction: "Take one visible personal action",
+    dailyAdmin: "Remove one source of friction",
+    risk: "Competing life priorities can dilute consistency.",
+    bottleneck: "Unclear personal success metric",
+  },
+  study: {
+    milestone: "Map the syllabus, weak areas, and exam-style output",
+    proof: "Complete a timed practice checkpoint",
+    monthOne: "Diagnose weak topics and build a revision calendar",
+    monthThree: "Run mocks, analyze mistakes, and tighten recall",
+    weeklyUnit: "study blocks",
+    weeklyAction: "Finish one module and one practice set",
+    dailyAction: "Complete one focused study session",
+    dailyAdmin: "Review flashcards or mistake notes",
+    risk: "Passive reading may replace active recall.",
+    bottleneck: "Weak feedback loop after practice",
+  },
+  startup: {
+    milestone: "Validate the customer, problem, and wedge",
+    proof: "Ship or demo a testable MVP slice",
+    monthOne: "Interview users, scope the wedge, and define traction metrics",
+    monthThree: "Ship, measure usage, and iterate toward retention",
+    weeklyUnit: "build/sell blocks",
+    weeklyAction: "Ship one product slice or customer learning",
+    dailyAction: "Complete one build or customer development action",
+    dailyAdmin: "Update assumptions and metrics",
+    risk: "Building too much before validation can slow learning.",
+    bottleneck: "Unvalidated customer problem",
+  },
+  career: {
+    milestone: "Define target role, gap map, and positioning",
+    proof: "Complete a portfolio, resume, or interview checkpoint",
+    monthOne: "Audit skills, sharpen positioning, and set outreach targets",
+    monthThree: "Interview, negotiate, or publish career proof",
+    weeklyUnit: "career blocks",
+    weeklyAction: "Finish one skill, portfolio, or outreach milestone",
+    dailyAction: "Complete one skill or outreach action",
+    dailyAdmin: "Update resume, tracker, or portfolio notes",
+    risk: "Unfocused applications can create low-quality volume.",
+    bottleneck: "Weak role positioning",
+  },
+  fitness: {
+    milestone: "Set baseline metrics, routine, and recovery plan",
+    proof: "Complete a measurable body or performance checkpoint",
+    monthOne: "Stabilize training, nutrition, sleep, and baseline tracking",
+    monthThree: "Measure adaptation and adjust training load",
+    weeklyUnit: "training blocks",
+    weeklyAction: "Complete the planned workouts and recovery checks",
+    dailyAction: "Complete training, steps, or mobility target",
+    dailyAdmin: "Log meals, sleep, or recovery",
+    risk: "Overtraining or inconsistent recovery can stall progress.",
+    bottleneck: "Poor recovery and tracking consistency",
+  },
+  finance: {
+    milestone: "Map income, expenses, debt, and investment priorities",
+    proof: "Complete a budget, savings, or payoff checkpoint",
+    monthOne: "Build the baseline budget and automate tracking",
+    monthThree: "Review cashflow, rebalance goals, and reduce leakage",
+    weeklyUnit: "finance review blocks",
+    weeklyAction: "Complete one budget, savings, or investment action",
+    dailyAction: "Track one money decision or transaction category",
+    dailyAdmin: "Review spend and update the tracker",
+    risk: "Untracked small expenses can quietly break the plan.",
+    bottleneck: "Incomplete cashflow visibility",
+  },
+  health: {
+    milestone: "Define symptoms, habits, appointments, and care routines",
+    proof: "Complete a measurable health habit checkpoint",
+    monthOne: "Stabilize sleep, movement, nutrition, and care schedule",
+    monthThree: "Review biomarkers, symptoms, and habit consistency",
+    weeklyUnit: "health blocks",
+    weeklyAction: "Complete one care routine or health review",
+    dailyAction: "Complete one core health habit",
+    dailyAdmin: "Log symptoms, energy, or recovery",
+    risk: "Ignoring recovery signals can create setbacks.",
+    bottleneck: "Inconsistent tracking of health signals",
+  },
+  creative: {
+    milestone: "Define the creative brief, output cadence, and feedback loop",
+    proof: "Publish or present a finished creative slice",
+    monthOne: "Build the concept, references, and production rhythm",
+    monthThree: "Ship a polished body of work and gather feedback",
+    weeklyUnit: "creation blocks",
+    weeklyAction: "Finish one draft, iteration, or published piece",
+    dailyAction: "Create one focused draft or revision",
+    dailyAdmin: "Capture references and update the idea queue",
+    risk: "Perfectionism can block shipping.",
+    bottleneck: "Lack of feedback and publishing cadence",
+  },
+};

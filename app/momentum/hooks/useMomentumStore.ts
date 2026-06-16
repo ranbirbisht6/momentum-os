@@ -112,6 +112,22 @@ function isPastDateKey(dateKey: string) {
   return dateKey < toDateKey(new Date());
 }
 
+function isPastMonthKey(monthKey: string) {
+  return monthKey < toMonthKey(new Date());
+}
+
+function isPastYear(year: number) {
+  return year < new Date().getFullYear();
+}
+
+function isPastScheduledTime(dateKey: string, scheduledAt?: string) {
+  if (!scheduledAt || dateKey !== toDateKey(new Date())) return false;
+  const [hour, minute] = scheduledAt.split(":").map(Number);
+  const scheduled = new Date();
+  scheduled.setHours(hour || 0, minute || 0, 0, 0);
+  return scheduled.getTime() < Date.now();
+}
+
 function buildGoal(
   title: string,
   description = "",
@@ -244,6 +260,7 @@ export function useMomentumStore() {
     (dateKey: string, input: CreateCategoryInput) => {
       if (isPastDateKey(dateKey)) return false;
       if (input.deadline && input.deadline < todayKey) return false;
+      if (isPastScheduledTime(dateKey, input.scheduledAt)) return false;
       const count = store.dailyCategories.filter((c) => c.dateKey === dateKey).length;
       if (count >= MAX_CATEGORIES || !input.title.trim()) return false;
       const forDate = store.dailyCategories.filter((c) => c.dateKey === dateKey);
@@ -294,6 +311,10 @@ export function useMomentumStore() {
       >,
     ) => {
       if (patch.deadline && patch.deadline < todayKey) return;
+      if (patch.scheduledAt) {
+        const existing = store.dailyCategories.find((category) => category.id === id);
+        if (existing && isPastScheduledTime(existing.dateKey, patch.scheduledAt)) return;
+      }
       updateStore((prev) => ({
         ...prev,
         dailyCategories: prev.dailyCategories.map((c) =>
@@ -301,7 +322,7 @@ export function useMomentumStore() {
         ),
       }));
     },
-    [todayKey, updateStore],
+    [store.dailyCategories, todayKey, updateStore],
   );
 
   const toggleDailyCategory = useCallback(
@@ -389,6 +410,8 @@ export function useMomentumStore() {
 
   const createMonthlyCategory = useCallback(
     (monthKey: string, input: CreateCategoryInput) => {
+      if (isPastMonthKey(monthKey)) return false;
+      if (input.deadline && input.deadline < todayKey) return false;
       const count = store.monthlyCategories.filter((c) => c.monthKey === monthKey).length;
       if (count >= MAX_CATEGORIES || !input.title.trim()) return false;
       const forMonth = store.monthlyCategories.filter((c) => c.monthKey === monthKey);
@@ -411,7 +434,7 @@ export function useMomentumStore() {
       }));
       return true;
     },
-    [store.monthlyCategories, updateStore],
+    [store.monthlyCategories, todayKey, updateStore],
   );
 
   const updateMonthlyCategory = useCallback(
@@ -419,6 +442,7 @@ export function useMomentumStore() {
       id: string,
       patch: Partial<Pick<MonthlyCategory, "title" | "description" | "tags" | "deadline">>,
     ) => {
+      if (patch.deadline && patch.deadline < todayKey) return;
       updateStore((prev) => ({
         ...prev,
         monthlyCategories: prev.monthlyCategories.map((c) =>
@@ -426,7 +450,7 @@ export function useMomentumStore() {
         ),
       }));
     },
-    [updateStore],
+    [todayKey, updateStore],
   );
 
   const toggleMonthlyCategory = useCallback(
@@ -504,6 +528,8 @@ export function useMomentumStore() {
 
   const createAnnualCategory = useCallback(
     (year: number, input: CreateCategoryInput) => {
+      if (isPastYear(year)) return false;
+      if (input.deadline && input.deadline < todayKey) return false;
       const count = store.annualCategories.filter((c) => c.year === year).length;
       if (count >= MAX_CATEGORIES || !input.title.trim()) return false;
       const forYear = store.annualCategories.filter((c) => c.year === year);
@@ -526,7 +552,7 @@ export function useMomentumStore() {
       }));
       return true;
     },
-    [store.annualCategories, updateStore],
+    [store.annualCategories, todayKey, updateStore],
   );
 
   const updateAnnualCategory = useCallback(
@@ -534,6 +560,7 @@ export function useMomentumStore() {
       id: string,
       patch: Partial<Pick<AnnualCategory, "title" | "description" | "tags" | "deadline">>,
     ) => {
+      if (patch.deadline && patch.deadline < todayKey) return;
       updateStore((prev) => ({
         ...prev,
         annualCategories: prev.annualCategories.map((c) =>
@@ -541,7 +568,7 @@ export function useMomentumStore() {
         ),
       }));
     },
-    [updateStore],
+    [todayKey, updateStore],
   );
 
   const toggleAnnualCategory = useCallback(
@@ -661,13 +688,14 @@ export function useMomentumStore() {
   const createGoal = useCallback(
     (title: string, description?: string, category?: string, deadline?: string) => {
       if (!title.trim()) return false;
+      if (deadline && deadline < todayKey) return false;
       updateStore((prev) => ({
         ...prev,
         goals: [buildGoal(title, description, category, deadline), ...prev.goals],
       }));
       return true;
     },
-    [updateStore],
+    [todayKey, updateStore],
   );
 
   const toggleGoalMilestone = useCallback(
@@ -692,10 +720,19 @@ export function useMomentumStore() {
   );
 
   const createAiPlan = useCallback(
-    (prompt: string) => {
+    (prompt: string, category = "AI Plan", deadline?: string) => {
       const title = prompt.trim();
       if (!title) return false;
-      const goal = buildGoal(title, "Generated local planning blueprint.", "AI Plan");
+      if (deadline && deadline < todayKey) return false;
+      const categoryLabel = category
+        .replace(/-/g, " ")
+        .replace(/^./, (char) => char.toUpperCase());
+      const goal = buildGoal(
+        title,
+        "Generated local planning blueprint.",
+        categoryLabel,
+        deadline,
+      );
       const today = toDateKey(new Date());
       updateStore((prev) => ({
         ...prev,
@@ -722,7 +759,7 @@ export function useMomentumStore() {
       }));
       return true;
     },
-    [updateStore],
+    [todayKey, updateStore],
   );
 
   const addWeeklyReview = useCallback(

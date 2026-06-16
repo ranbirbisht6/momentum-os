@@ -249,12 +249,12 @@ function DashboardViewInner({
 
 function QuickActions({ onNavigate }: { onNavigate?: (tab: TabId) => void }) {
   const actions: { label: string; hint: string; tab: TabId; icon: LucideIcon }[] = [
-    { label: "Add Task", hint: "Plan today", tab: "today", icon: Plus },
-    { label: "Create Goal", hint: "Define outcome", tab: "goals", icon: Target },
+    { label: "New Task", hint: "Create work for today", tab: "today", icon: Plus },
+    { label: "New Goal", hint: "Set target date", tab: "goals", icon: Target },
+    { label: "New Reminder", hint: "Add reminder to task", tab: "today", icon: CalendarClock },
     { label: "AI Plan", hint: "Generate roadmap", tab: "ai-planning", icon: Sparkles },
     { label: "Review Week", hint: "Capture signal", tab: "reviews", icon: BookOpenCheck },
     { label: "Journal", hint: "Write clearly", tab: "journal", icon: PenLine },
-    { label: "Team", hint: "Assign work", tab: "team", icon: CalendarClock },
   ];
 
   return (

@@ -54,7 +54,12 @@ export function PlannerPage({
   const [editing, setEditing] = useState<CategoryData | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const todayKey = actions.todayKey;
+  const currentMonthKey = actions.currentMonthKey;
+  const currentYear = actions.currentYear;
   const isPastDailyPeriod = scope === "daily" && String(periodValue) < todayKey;
+  const isPastMonthlyPeriod = scope === "monthly" && String(periodValue) < currentMonthKey;
+  const isPastAnnualPeriod = scope === "annual" && Number(periodValue) < currentYear;
+  const isPastPeriod = isPastDailyPeriod || isPastMonthlyPeriod || isPastAnnualPeriod;
 
   const rawCategories = useMemo(() => {
     if (scope === "daily") return actions.getDailyCategories(String(periodValue));
@@ -74,8 +79,8 @@ export function PlannerPage({
 
   const saveNewCategory = (input: CreateCategoryInput) => {
     let ok = false;
-    if (isPastDailyPeriod) {
-      toast.error("Past dates are read-only");
+    if (isPastPeriod) {
+      toast.error("Past periods are read-only");
       return;
     }
     if (scope === "daily") {
@@ -110,6 +115,7 @@ export function PlannerPage({
           <button
             type="button"
             onClick={onPrev}
+            disabled={isCurrentPeriod || isPastPeriod}
             className="rounded-lg p-2 muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
             aria-label="Previous"
           >
@@ -137,9 +143,9 @@ export function PlannerPage({
         <button
           type="button"
           onClick={() => setShowNewCategory(true)}
-          disabled={rawCategories.length >= MAX_CATEGORIES || isPastDailyPeriod}
+          disabled={rawCategories.length >= MAX_CATEGORIES || isPastPeriod}
           className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-40"
-          title={isPastDailyPeriod ? "Past dates are read-only" : undefined}
+          title={isPastPeriod ? "Past periods are read-only" : undefined}
         >
           <Plus className="h-4 w-4" />
           New task
@@ -149,7 +155,7 @@ export function PlannerPage({
       <p className="text-xs soft-text">
         {progress.completed}/{progress.total} tasks - {rawCategories.length}/
         {MAX_CATEGORIES} groups
-        {isPastDailyPeriod ? " - past dates are read-only" : ""}
+        {isPastPeriod ? " - past periods are read-only" : ""}
       </p>
 
       <div className="relative">
@@ -170,11 +176,11 @@ export function PlannerPage({
       {hydrated && rawCategories.length === 0 && (
         <div className="premium-card rounded-3xl px-6 py-14 text-center">
           <p className="text-lg font-semibold tracking-tight text-[var(--text)]">
-            {isPastDailyPeriod ? "No tasks were planned here" : "No tasks yet"}
+            {isPastPeriod ? "No tasks were planned here" : "No tasks yet"}
           </p>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 muted-text">
-            {isPastDailyPeriod
-              ? "Past days stay available for review, but new work must be scheduled today or later."
+            {isPastPeriod
+              ? "Past periods stay available for review, but new work must be scheduled today or later."
               : "Create your first task group to organize this period."}
           </p>
         </div>

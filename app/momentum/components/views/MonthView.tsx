@@ -21,13 +21,17 @@ export function MonthView({
       actions={actions}
       periodValue={selectedMonth}
       setPeriodValue={setSelectedMonth}
-      onPrev={() => setSelectedMonth(shiftMonth(selectedMonth, -1))}
+      onPrev={() => {
+        const previous = shiftMonth(selectedMonth, -1);
+        if (previous >= currentMonthKey) setSelectedMonth(previous);
+      }}
       onNext={() => setSelectedMonth(shiftMonth(selectedMonth, 1))}
       onToday={() => setSelectedMonth(currentMonthKey)}
       isCurrentPeriod={selectedMonth === currentMonthKey}
       periodInput={
         <input
           type="month"
+          min={currentMonthKey}
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
           className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"

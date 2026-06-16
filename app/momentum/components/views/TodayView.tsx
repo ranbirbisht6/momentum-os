@@ -21,13 +21,17 @@ export function TodayView({
       actions={actions}
       periodValue={selectedDate}
       setPeriodValue={setSelectedDate}
-      onPrev={() => setSelectedDate(shiftDate(selectedDate, -1))}
+      onPrev={() => {
+        const previous = shiftDate(selectedDate, -1);
+        if (previous >= todayKey) setSelectedDate(previous);
+      }}
       onNext={() => setSelectedDate(shiftDate(selectedDate, 1))}
       onToday={() => setSelectedDate(todayKey)}
       isCurrentPeriod={selectedDate === todayKey}
       periodInput={
         <input
           type="date"
+          min={todayKey}
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
