@@ -1,6 +1,6 @@
 export function ProgressBar({
   percent,
-  gradient = "from-violet-500 to-fuchsia-500",
+  gradient,
   size = "md",
 }: {
   percent: number;
@@ -9,9 +9,9 @@ export function ProgressBar({
 }) {
   const h = size === "sm" ? "h-1.5" : "h-2.5";
   return (
-    <div className={`overflow-hidden rounded-full bg-zinc-800/80 ${h}`}>
+    <div className={`overflow-hidden rounded-full bg-[var(--surface-soft)] ${h}`}>
       <div
-        className={`${h} rounded-full bg-gradient-to-r ${gradient} transition-all duration-700 ease-out`}
+        className={`${h} rounded-full transition-all duration-700 ease-out ${gradient ? `bg-gradient-to-r ${gradient}` : "bg-[var(--accent)]"}`}
         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
       />
     </div>
@@ -32,13 +32,13 @@ export function ProgressBlock({
   gradient: string;
 }) {
   return (
-    <div className="mt-5 rounded-xl border border-white/[0.06] bg-zinc-950/40 p-4">
+    <div className="surface-soft mt-5 rounded-xl border p-4">
       <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="font-medium text-zinc-400">{label}</span>
-        <span className="font-bold tabular-nums text-zinc-200">{percent}%</span>
+        <span className="font-medium muted-text">{label}</span>
+        <span className="font-semibold tabular-nums text-[var(--text)]">{percent}%</span>
       </div>
       <ProgressBar percent={percent} gradient={gradient} />
-      <p className="mt-2 text-xs text-zinc-600">
+      <p className="mt-2 text-xs soft-text">
         {completed} of {total} completed
       </p>
     </div>

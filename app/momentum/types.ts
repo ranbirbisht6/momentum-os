@@ -1,4 +1,5 @@
 export type Priority = "critical" | "high" | "medium" | "low";
+export type TaskTag = "urgent" | "doc";
 
 export type Subtask = {
   id: string;
@@ -12,6 +13,8 @@ export type DailyCategory = {
   title: string;
   description: string;
   priority: Priority;
+  completed: boolean;
+  tags: TaskTag[];
   dateKey: string;
   subtasks: Subtask[];
   createdAt: number;
@@ -22,6 +25,8 @@ export type MonthlyCategory = {
   id: string;
   title: string;
   description: string;
+  completed: boolean;
+  tags: TaskTag[];
   monthKey: string;
   subtasks: Subtask[];
   createdAt: number;
@@ -32,6 +37,8 @@ export type AnnualCategory = {
   id: string;
   title: string;
   description: string;
+  completed: boolean;
+  tags: TaskTag[];
   year: number;
   subtasks: Subtask[];
   createdAt: number;
@@ -59,6 +66,7 @@ export type CreateCategoryInput = {
   description?: string;
   subtaskTitles: string[];
   priority?: Priority;
+  tags?: TaskTag[];
 };
 
 export type TabId =
@@ -67,6 +75,7 @@ export type TabId =
   | "month"
   | "year"
   | "insights"
+  | "analytics"
   | "settings";
 
 export type ProgressSnapshot = {

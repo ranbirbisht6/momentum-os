@@ -1,11 +1,5 @@
 import type { AssistantInsight, MomentumStore } from "../types";
-import {
-  aggregateProgress,
-  flattenDailySubtasks,
-  flattenMonthlySubtasks,
-  pickTodayFocus,
-  subtaskProgress,
-} from "../utils";
+import { categoryProgress, pickTodayFocus } from "../utils";
 import { formatGreeting } from "./greeting";
 import { getMostActiveCategoryToday } from "./dashboard";
 
@@ -16,13 +10,10 @@ export function buildAssistantInsights(
   userName?: string | null,
 ): AssistantInsight {
   const todayCats = store.dailyCategories.filter((c) => c.dateKey === todayKey);
-  const todaySubtasks = flattenDailySubtasks(store.dailyCategories, todayKey);
-  const todayProgress = aggregateProgress(todaySubtasks);
-  const monthSubtasks = flattenMonthlySubtasks(
-    store.monthlyCategories,
-    currentMonthKey,
+  const todayProgress = categoryProgress(todayCats);
+  const monthProgress = categoryProgress(
+    store.monthlyCategories.filter((c) => c.monthKey === currentMonthKey),
   );
-  const monthProgress = aggregateProgress(monthSubtasks);
   const focus = pickTodayFocus(todayCats);
   const mostActive = getMostActiveCategoryToday(todayCats);
 
@@ -59,7 +50,7 @@ export function buildAssistantInsights(
   }
 
   if (todayProgress.total === 0) {
-    recommendations.push("Add a category on Today to start planning.");
+    recommendations.push("Add a task on Today to start planning.");
   }
 
   return {

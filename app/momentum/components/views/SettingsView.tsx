@@ -18,7 +18,8 @@ export function SettingsView({ actions }: { actions: MomentumActions }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    setName(resolveUserName(store) ?? "");
+    const id = window.setTimeout(() => setName(resolveUserName(store) ?? ""), 0);
+    return () => window.clearTimeout(id);
   }, [hydrated, store]);
 
   const saveName = () => {
@@ -60,15 +61,15 @@ export function SettingsView({ actions }: { actions: MomentumActions }) {
   return (
     <PageContainer className="max-w-lg space-y-6">
       <Surface>
-        <p className="text-sm font-medium text-zinc-200">Display name</p>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="text-sm font-semibold text-[var(--text)]">Display name</p>
+        <p className="mt-1 text-xs muted-text">
           Optional. When set, your greeting becomes &quot;Good evening, Name.&quot;
         </p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="mt-3 h-10 w-full rounded-lg border border-white/[0.06] bg-transparent px-3 text-sm outline-none focus:border-violet-500/20"
+          className="mt-3 h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)]"
         />
         <div className="mt-3">
           <PrimaryButton onClick={saveName}>Save</PrimaryButton>
@@ -76,23 +77,28 @@ export function SettingsView({ actions }: { actions: MomentumActions }) {
       </Surface>
 
       <Surface>
-        <p className="text-sm font-medium text-zinc-200">Export data</p>
-        <p className="mt-1 text-xs text-zinc-500">Download a JSON backup.</p>
+        <p className="text-sm font-semibold text-[var(--text)]">Export data</p>
+        <p className="mt-1 text-xs muted-text">Download a JSON backup.</p>
         <div className="mt-4">
           <PrimaryButton onClick={handleExport}>Export JSON</PrimaryButton>
         </div>
       </Surface>
 
       <Surface>
-        <p className="text-sm font-medium text-zinc-200">Import data</p>
+        <p className="text-sm font-semibold text-[var(--text)]">Import data</p>
         <textarea
           value={importText}
           onChange={(e) => setImportText(e.target.value)}
           rows={4}
-          placeholder="Paste backup JSON…"
-          className="mt-3 w-full resize-y rounded-lg border border-white/[0.06] bg-transparent px-3 py-2 text-sm outline-none focus:border-violet-500/20"
+          placeholder="Paste backup JSON..."
+          className="mt-3 w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)]"
         />
-        <input ref={fileRef} type="file" accept="application/json" className="mt-3 block text-xs text-zinc-500" />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="mt-3 block text-xs muted-text"
+        />
         <div className="mt-4">
           <PrimaryButton onClick={handleImport}>Import</PrimaryButton>
         </div>

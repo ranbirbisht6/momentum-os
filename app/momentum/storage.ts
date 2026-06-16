@@ -11,9 +11,10 @@ import type {
   MonthlyCategory,
   Priority,
   Subtask,
+  TaskTag,
 } from "./types";
 import { createId, toDateKey } from "./utils";
-import { nextOrder, sortByOrder } from "./utils/categories";
+import { sortByOrder } from "./utils/categories";
 
 export const EMPTY_STORE: MomentumStore = {
   dailyCategories: [],
@@ -32,6 +33,11 @@ function migrateSubtask(raw: Record<string, unknown>): Subtask {
   };
 }
 
+function migrateTags(raw: unknown): TaskTag[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((tag): tag is TaskTag => tag === "urgent" || tag === "doc");
+}
+
 function migrateDailyCategory(
   raw: Record<string, unknown>,
   index: number,
@@ -44,6 +50,8 @@ function migrateDailyCategory(
     title: String(raw.title ?? ""),
     description: String(raw.description ?? ""),
     priority: (raw.priority as Priority) ?? "medium",
+    completed: Boolean(raw.completed),
+    tags: migrateTags(raw.tags),
     dateKey: String(raw.dateKey ?? toDateKey(new Date())),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
@@ -62,6 +70,8 @@ function migrateMonthlyCategory(
     id: String(raw.id ?? createId()),
     title: String(raw.title ?? ""),
     description: String(raw.description ?? ""),
+    completed: Boolean(raw.completed),
+    tags: migrateTags(raw.tags),
     monthKey: String(raw.monthKey ?? ""),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
@@ -80,6 +90,8 @@ function migrateAnnualCategory(
     id: String(raw.id ?? createId()),
     title: String(raw.title ?? ""),
     description: String(raw.description ?? ""),
+    completed: Boolean(raw.completed),
+    tags: migrateTags(raw.tags),
     year: Number(raw.year ?? new Date().getFullYear()),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
@@ -95,6 +107,8 @@ function taskToDailyCategory(raw: Record<string, unknown>, index: number): Daily
     title: String(raw.title ?? "Untitled"),
     description: "",
     priority: (raw.priority as Priority) ?? "medium",
+    completed,
+    tags: migrateTags(raw.tags),
     dateKey: String(raw.dateKey ?? toDateKey(new Date())),
     subtasks: [
       {
@@ -115,6 +129,8 @@ function goalToMonthlyCategory(raw: Record<string, unknown>, index: number): Mon
     id: String(raw.id ?? createId()),
     title: String(raw.title ?? "Untitled"),
     description: "",
+    completed,
+    tags: migrateTags(raw.tags),
     monthKey: String(raw.monthKey ?? ""),
     subtasks: [
       {
@@ -138,6 +154,8 @@ function objectiveToAnnualCategory(
     id: String(raw.id ?? createId()),
     title: String(raw.title ?? "Untitled"),
     description: "",
+    completed,
+    tags: migrateTags(raw.tags),
     year: Number(raw.year ?? new Date().getFullYear()),
     subtasks: [
       {

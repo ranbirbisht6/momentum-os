@@ -60,12 +60,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto animate-in slide-in-from-bottom-4 fade-in rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl duration-300 ${
+            className={`pointer-events-auto animate-in slide-in-from-bottom-4 fade-in rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl duration-300 ${
               t.type === "success"
-                ? "border-emerald-500/30 bg-emerald-950/90 text-emerald-100"
+                ? "border-[var(--accent)] bg-[var(--surface)] text-[var(--text)]"
                 : t.type === "error"
-                  ? "border-red-500/30 bg-red-950/90 text-red-100"
-                  : "border-white/10 bg-zinc-900/95 text-zinc-100"
+                  ? "border-[var(--danger)] bg-[var(--surface)] text-[var(--danger)]"
+                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"
             }`}
           >
             {t.message}

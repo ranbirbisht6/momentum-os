@@ -13,37 +13,37 @@ function AIAssistantCardInner({
   compact?: boolean;
 }) {
   return (
-    <Surface className={compact ? "" : "border-violet-500/10 bg-violet-500/[0.03]"}>
+    <Surface className={compact ? "" : "border-[var(--border-strong)]"}>
       <div className="flex gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)] accent-text">
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1 space-y-3">
           <div>
-            <p className="text-lg font-medium tracking-tight text-zinc-100">
+            <p className="text-lg font-semibold tracking-tight text-[var(--text)]">
               {insight.greeting}
             </p>
-            <p className="mt-1 text-sm text-zinc-500">{insight.subtitle}</p>
+            <p className="mt-1 text-sm muted-text">{insight.subtitle}</p>
           </div>
 
           {insight.tasksLeftToday > 0 && (
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-[var(--text)]">
               You have {insight.tasksLeftToday} task
               {insight.tasksLeftToday === 1 ? "" : "s"} left today.
             </p>
           )}
 
           {!compact && (
-            <div className="space-y-2 border-t border-white/[0.06] pt-3 text-sm text-zinc-400">
+            <div className="space-y-2 border-t pt-3 text-sm muted-text" style={{ borderColor: "var(--border)" }}>
               {insight.mostActiveCategory && (
                 <p>
-                  <span className="text-zinc-500">Most active category:</span>{" "}
+                  <span className="soft-text">Most active category:</span>{" "}
                   {insight.mostActiveCategory}
                 </p>
               )}
               {insight.suggestedNextAction && (
                 <p>
-                  <span className="text-zinc-500">Suggested next action:</span>{" "}
+                  <span className="soft-text">Suggested next action:</span>{" "}
                   {insight.suggestedNextAction}
                 </p>
               )}
@@ -52,14 +52,15 @@ function AIAssistantCardInner({
 
           {insight.recommendations.length > 0 && (
             <ul
-              className={`space-y-2 ${compact ? "" : "border-t border-white/[0.06] pt-3"}`}
+              className={`space-y-2 ${compact ? "" : "border-t pt-3"}`}
+              style={compact ? undefined : { borderColor: "var(--border)" }}
             >
               {insight.recommendations.map((line) => (
                 <li
                   key={line}
-                  className="flex gap-2 text-xs leading-relaxed text-zinc-500"
+                  className="flex gap-2 text-xs leading-relaxed muted-text"
                 >
-                  <Brain className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-500/70" />
+                  <Brain className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-text" />
                   <span>{line}</span>
                 </li>
               ))}

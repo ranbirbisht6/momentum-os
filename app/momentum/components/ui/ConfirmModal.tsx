@@ -22,12 +22,12 @@ export function ConfirmModal({
 }) {
   return (
     <Modal open={open} title={title} onClose={onClose}>
-      <p className="text-sm leading-relaxed text-zinc-400">{message}</p>
+      <p className="text-sm leading-relaxed muted-text">{message}</p>
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 flex-1 rounded-xl border border-white/10 text-sm text-zinc-400 hover:text-zinc-200"
+          className="min-h-11 flex-1 rounded-lg border border-[var(--border)] text-sm muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
         >
           Cancel
         </button>
@@ -37,9 +37,7 @@ export function ConfirmModal({
             onConfirm();
             onClose();
           }}
-          gradient={
-            danger ? "from-red-600 to-red-700" : "from-violet-600 to-fuchsia-600"
-          }
+          tone={danger ? "danger" : "primary"}
         >
           {confirmLabel}
         </PrimaryButton>

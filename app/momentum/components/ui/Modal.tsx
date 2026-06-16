@@ -28,7 +28,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <button
         type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-stone-950/45 backdrop-blur-sm"
         aria-label="Close dialog"
         onClick={onClose}
       />
@@ -36,9 +36,9 @@ export function Modal({
         role="dialog"
         aria-modal
         aria-labelledby="modal-title"
-        className="relative w-full max-w-md animate-in fade-in zoom-in-95 rounded-2xl border border-white/10 bg-zinc-900/95 p-6 shadow-2xl backdrop-blur-xl duration-300"
+        className="surface relative w-full max-w-md animate-in rounded-xl border p-6 duration-300 fade-in zoom-in-95"
       >
-        <h3 id="modal-title" className="text-lg font-bold text-zinc-100">
+        <h3 id="modal-title" className="text-lg font-semibold tracking-tight text-[var(--text)]">
           {title}
         </h3>
         <div className="mt-4">{children}</div>

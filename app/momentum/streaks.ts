@@ -1,18 +1,15 @@
 import { BADGES } from "./constants";
 import type { MomentumStore, StreakMeta } from "./types";
 import {
-  flattenAnnualSubtasks,
-  flattenDailySubtasks,
-  flattenMonthlySubtasks,
-  progressPercent,
+  categoryProgress,
   toDateKey,
 } from "./utils";
 
 function dayQualifies(store: MomentumStore, dateKey: string) {
-  const subtasks = flattenDailySubtasks(store.dailyCategories, dateKey);
-  if (subtasks.length === 0) return false;
-  const done = subtasks.filter((s) => s.completed).length;
-  return progressPercent(done, subtasks.length) === 100;
+  const categories = store.dailyCategories.filter((c) => c.dateKey === dateKey);
+  const progress = categoryProgress(categories);
+  if (progress.total === 0) return false;
+  return progress.percent === 100;
 }
 
 function dateKeyBefore(key: string) {
@@ -66,15 +63,9 @@ export function computeStreakFromStore(
 
 export function computeUnlockedBadges(store: MomentumStore): string[] {
   const unlocked = new Set(store.streak.unlockedBadges);
-  const totalCompleted = flattenDailySubtasks(store.dailyCategories).filter(
-    (s) => s.completed,
-  ).length;
-  const monthlyDone = flattenMonthlySubtasks(store.monthlyCategories).filter(
-    (s) => s.completed,
-  ).length;
-  const annualDone = flattenAnnualSubtasks(store.annualCategories).filter(
-    (s) => s.completed,
-  ).length;
+  const totalCompleted = categoryProgress(store.dailyCategories).completed;
+  const monthlyDone = categoryProgress(store.monthlyCategories).completed;
+  const annualDone = categoryProgress(store.annualCategories).completed;
   const { currentStreak, bestStreak } = store.streak;
 
   if (totalCompleted >= 1) unlocked.add("first-task");

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Award, CheckCircle2, Flame, TrendingUp } from "lucide-react";
 import { BADGES } from "../../constants";
 import {
@@ -12,60 +12,121 @@ import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
 import { BarChart } from "../ui/BarChart";
 
-function InsightsViewInner({ actions }: { actions: MomentumActions }) {
+function InsightsViewInner({
+  actions,
+  analyticsOnly = false,
+}: {
+  actions: MomentumActions;
+  analyticsOnly?: boolean;
+}) {
   const { store, hydrated, setNotes } = actions;
   const [notes, setLocalNotes] = useState("");
 
   useEffect(() => {
-    if (hydrated) setLocalNotes(store.notes);
+    if (!hydrated) return;
+    const id = window.setTimeout(() => setLocalNotes(store.notes), 0);
+    return () => window.clearTimeout(id);
   }, [hydrated, store.notes]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || analyticsOnly) return;
     const t = window.setTimeout(() => setNotes(notes), 400);
-    return () => clearTimeout(t);
-  }, [notes, hydrated, setNotes]);
+    return () => window.clearTimeout(t);
+  }, [notes, hydrated, setNotes, analyticsOnly]);
 
-  const weekly = useMemo(() => (hydrated ? weeklyCompletionRate(store) : []), [hydrated, store]);
-  const monthly = useMemo(() => (hydrated ? monthlyCompletionRate(store) : []), [hydrated, store]);
+  const weekly = useMemo(
+    () => (hydrated ? weeklyCompletionRate(store) : []),
+    [hydrated, store],
+  );
+  const monthly = useMemo(
+    () => (hydrated ? monthlyCompletionRate(store) : []),
+    [hydrated, store],
+  );
+
+  if (analyticsOnly) {
+    return (
+      <PageContainer className="space-y-8">
+        <section className="grid gap-3 sm:grid-cols-2">
+          <Surface>
+            <p className="text-xs font-semibold uppercase tracking-wider soft-text">
+              Weekly rate
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-[var(--text)]">
+              {weekly.at(-1)?.percent ?? 0}%
+            </p>
+            <p className="mt-1 text-sm muted-text">
+              Latest daily completion snapshot.
+            </p>
+          </Surface>
+          <Surface>
+            <p className="text-xs font-semibold uppercase tracking-wider soft-text">
+              Monthly rate
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-[var(--text)]">
+              {monthly.at(-1)?.percent ?? 0}%
+            </p>
+            <p className="mt-1 text-sm muted-text">
+              Current month progress snapshot.
+            </p>
+          </Surface>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--text)]">
+            Completion history
+          </h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Surface padding="sm">
+              <p className="mb-4 text-xs soft-text">Weekly</p>
+              <BarChart data={weekly} />
+            </Surface>
+            <Surface padding="sm">
+              <p className="mb-4 text-xs soft-text">Monthly</p>
+              <BarChart data={monthly} />
+            </Surface>
+          </div>
+        </section>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer className="space-y-10">
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-zinc-400">Notes</h2>
+        <h2 className="text-sm font-semibold text-[var(--text)]">Notes</h2>
         <textarea
           value={notes}
           onChange={(e) => setLocalNotes(e.target.value)}
           rows={6}
-          placeholder="Capture ideas, reflections, or planning notes…"
-          className="w-full resize-y rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-violet-500/20"
+          placeholder="Capture ideas, reflections, or planning notes..."
+          className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)]"
         />
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-zinc-400">Streaks</h2>
+        <h2 className="text-sm font-semibold text-[var(--text)]">Streaks</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <Surface className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10">
-              <Flame className="h-5 w-5 text-orange-400" />
-            </div>
+            <MetricIcon>
+              <Flame className="h-5 w-5 accent-text" />
+            </MetricIcon>
             <div>
-              <p className="text-xs text-zinc-500">Current streak</p>
-              <p className="text-2xl font-semibold tabular-nums text-zinc-100">
-                {hydrated ? store.streak.currentStreak : "—"}{" "}
-                <span className="text-sm font-normal text-zinc-500">days</span>
+              <p className="text-xs muted-text">Current streak</p>
+              <p className="text-2xl font-semibold tabular-nums text-[var(--text)]">
+                {hydrated ? store.streak.currentStreak : "-"}{" "}
+                <span className="text-sm font-normal muted-text">days</span>
               </p>
             </div>
           </Surface>
           <Surface className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10">
-              <TrendingUp className="h-5 w-5 text-violet-400" />
-            </div>
+            <MetricIcon>
+              <TrendingUp className="h-5 w-5 accent-text" />
+            </MetricIcon>
             <div>
-              <p className="text-xs text-zinc-500">Best streak</p>
-              <p className="text-2xl font-semibold tabular-nums text-zinc-100">
-                {hydrated ? store.streak.bestStreak : "—"}{" "}
-                <span className="text-sm font-normal text-zinc-500">days</span>
+              <p className="text-xs muted-text">Best streak</p>
+              <p className="text-2xl font-semibold tabular-nums text-[var(--text)]">
+                {hydrated ? store.streak.bestStreak : "-"}{" "}
+                <span className="text-sm font-normal muted-text">days</span>
               </p>
             </div>
           </Surface>
@@ -73,7 +134,7 @@ function InsightsViewInner({ actions }: { actions: MomentumActions }) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-sm font-medium text-zinc-400">Achievements</h2>
+        <h2 className="text-sm font-semibold text-[var(--text)]">Achievements</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           {BADGES.map((badge) => {
             const unlocked = store.streak.unlockedBadges.includes(badge.id);
@@ -82,18 +143,20 @@ function InsightsViewInner({ actions }: { actions: MomentumActions }) {
                 key={badge.id}
                 className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
                   unlocked
-                    ? "border-emerald-500/20 bg-emerald-500/5"
-                    : "border-white/[0.06] opacity-50"
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)]"
+                    : "border-[var(--border)] opacity-55"
                 }`}
               >
                 {unlocked ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 accent-text" />
                 ) : (
-                  <Award className="h-4 w-4 shrink-0 text-zinc-600" />
+                  <Award className="h-4 w-4 shrink-0 soft-text" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-zinc-300">{badge.name}</p>
-                  <p className="text-xs text-zinc-600">{badge.description}</p>
+                  <p className="text-sm font-medium text-[var(--text)]">
+                    {badge.name}
+                  </p>
+                  <p className="text-xs muted-text">{badge.description}</p>
                 </div>
               </div>
             );
@@ -102,23 +165,33 @@ function InsightsViewInner({ actions }: { actions: MomentumActions }) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-sm font-medium text-zinc-400">Completion history</h2>
+        <h2 className="text-sm font-semibold text-[var(--text)]">
+          Completion history
+        </h2>
         <div className="space-y-6">
           <div>
-            <p className="mb-2 text-xs text-zinc-600">Weekly</p>
+            <p className="mb-2 text-xs soft-text">Weekly</p>
             <Surface padding="sm">
-              <BarChart data={weekly} gradient="from-violet-500/80 to-violet-600/80" />
+              <BarChart data={weekly} />
             </Surface>
           </div>
           <div>
-            <p className="mb-2 text-xs text-zinc-600">Monthly</p>
+            <p className="mb-2 text-xs soft-text">Monthly</p>
             <Surface padding="sm">
-              <BarChart data={monthly} gradient="from-cyan-500/80 to-cyan-600/80" />
+              <BarChart data={monthly} />
             </Surface>
           </div>
         </div>
       </section>
     </PageContainer>
+  );
+}
+
+function MetricIcon({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
+      {children}
+    </div>
   );
 }
 

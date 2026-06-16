@@ -12,7 +12,7 @@ import type {
   MonthlyCategory,
 } from "../types";
 import {
-  aggregateProgress,
+  categoryProgress,
   filterCategories,
   shiftDate,
   shiftMonth,
@@ -23,12 +23,12 @@ import { NewCategoryModal } from "./NewCategoryModal";
 import { PageContainer } from "./design/PageContainer";
 
 type PlannerScope = "daily" | "monthly" | "annual";
+type AnyCategory = DailyCategory | MonthlyCategory | AnnualCategory;
 
 export function PlannerPage({
   scope,
   actions,
   periodValue,
-  setPeriodValue,
   onPrev,
   onNext,
   onToday,
@@ -60,15 +60,13 @@ export function PlannerPage({
     return actions.getAnnualCategories(Number(periodValue));
   }, [scope, actions, periodValue]);
 
-  type AnyCategory = DailyCategory | MonthlyCategory | AnnualCategory;
-
   const categories = useMemo(
     () => filterCategories<AnyCategory>(rawCategories, search, search),
     [rawCategories, search],
   );
 
   const progress = useMemo(
-    () => aggregateProgress(rawCategories.flatMap((c) => c.subtasks)),
+    () => categoryProgress(rawCategories),
     [rawCategories],
   );
 
@@ -81,14 +79,16 @@ export function PlannerPage({
     } else {
       ok = actions.createAnnualCategory(Number(periodValue), input);
     }
-    if (ok) toast.success("Category saved");
-    else toast.error(`Maximum ${MAX_CATEGORIES} categories for this period`);
+    if (ok) toast.success("Task saved");
+    else toast.error(`Maximum ${MAX_CATEGORIES} tasks for this period`);
   };
 
   const mapCategory = (c: AnyCategory): CategoryData => ({
     id: c.id,
     title: c.title,
     description: c.description || undefined,
+    completed: c.completed,
+    tags: c.tags,
     subtasks: c.subtasks,
     priority: "priority" in c ? c.priority : undefined,
   });
@@ -100,7 +100,7 @@ export function PlannerPage({
           <button
             type="button"
             onClick={onPrev}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+            className="rounded-lg p-2 muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
             aria-label="Previous"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -109,7 +109,7 @@ export function PlannerPage({
           <button
             type="button"
             onClick={onNext}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+            className="rounded-lg p-2 muted-text transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
             aria-label="Next"
           >
             <ChevronRight className="h-4 w-4" />
@@ -118,9 +118,9 @@ export function PlannerPage({
             <button
               type="button"
               onClick={onToday}
-              className="ml-2 text-xs text-violet-400 hover:text-violet-300"
+              className="ml-2 text-xs font-medium accent-text hover:underline"
             >
-              Today
+              Current
             </button>
           )}
         </div>
@@ -128,36 +128,36 @@ export function PlannerPage({
           type="button"
           onClick={() => setShowNewCategory(true)}
           disabled={rawCategories.length >= MAX_CATEGORIES}
-          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:opacity-40"
         >
           <Plus className="h-4 w-4" />
-          New category
+          New task
         </button>
       </div>
 
-      <p className="text-xs text-zinc-500">
-        {progress.completed}/{progress.total} tasks · {rawCategories.length}/
-        {MAX_CATEGORIES} categories
+      <p className="text-xs soft-text">
+        {progress.completed}/{progress.total} tasks - {rawCategories.length}/
+        {MAX_CATEGORIES} groups
       </p>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 soft-text" />
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search categories and tasks…"
-          className="h-10 w-full rounded-xl border border-white/[0.06] bg-white/[0.02] pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-violet-500/20"
+          placeholder="Search tasks and subtasks..."
+          className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] pl-10 pr-4 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted-soft)] focus:border-[var(--accent)]"
         />
       </div>
 
       {!hydrated && (
-        <p className="py-16 text-center text-sm text-zinc-500">Loading…</p>
+        <p className="py-16 text-center text-sm muted-text">Loading...</p>
       )}
 
       {hydrated && rawCategories.length === 0 && (
-        <p className="py-16 text-center text-sm text-zinc-500">
-          No categories yet. Create one to organize your tasks.
+        <p className="py-16 text-center text-sm muted-text">
+          No tasks yet. Create one to organize this period.
         </p>
       )}
 
@@ -172,6 +172,12 @@ export function PlannerPage({
                 showPriority={scope === "daily"}
                 newTaskValue={newTasks[cat.id] ?? ""}
                 onNewTaskChange={(v) => setNewTasks((p) => ({ ...p, [cat.id]: v }))}
+                onToggleCategory={() => {
+                  if (scope === "daily") actions.toggleDailyCategory(cat.id);
+                  else if (scope === "monthly") actions.toggleMonthlyCategory(cat.id);
+                  else actions.toggleAnnualCategory(cat.id);
+                  toast.success(cat.completed ? "Task reopened" : "Task completed");
+                }}
                 onAddTask={() => {
                   const title = (newTasks[cat.id] ?? "").trim();
                   if (!title) return;
@@ -191,8 +197,8 @@ export function PlannerPage({
                   else actions.toggleAnnualSubtask(cat.id, taskId);
                   if (task && !task.completed) {
                     setFlashId(taskId);
-                    toast.success("Task completed");
-                    setTimeout(() => setFlashId(null), 600);
+                    toast.success("Subtask completed");
+                    window.setTimeout(() => setFlashId(null), 600);
                   }
                 }}
                 onDeleteTask={(taskId) => {
@@ -205,7 +211,7 @@ export function PlannerPage({
                   if (scope === "daily") actions.deleteDailyCategory(cat.id);
                   else if (scope === "monthly") actions.deleteMonthlyCategory(cat.id);
                   else actions.deleteAnnualCategory(cat.id);
-                  toast.success("Category deleted");
+                  toast.success("Task deleted");
                 }}
                 onEditCategory={() => setEditing(data)}
                 flashTaskId={flashId}
@@ -227,22 +233,24 @@ export function PlannerPage({
         title={editing?.title ?? ""}
         description={editing?.description ?? ""}
         priority={editing?.priority}
+        tags={editing?.tags ?? []}
         showPriority={scope === "daily"}
         onClose={() => setEditing(null)}
-        onSave={({ title, description, priority: p }) => {
+        onSave={({ title, description, priority: p, tags }) => {
           if (!editing) return;
           if (scope === "daily") {
             actions.updateDailyCategory(editing.id, {
               title,
               description,
+              tags,
               ...(p ? { priority: p } : {}),
             });
           } else if (scope === "monthly") {
-            actions.updateMonthlyCategory(editing.id, { title, description });
+            actions.updateMonthlyCategory(editing.id, { title, description, tags });
           } else {
-            actions.updateAnnualCategory(editing.id, { title, description });
+            actions.updateAnnualCategory(editing.id, { title, description, tags });
           }
-          toast.success("Category updated");
+          toast.success("Task updated");
         }}
       />
     </PageContainer>

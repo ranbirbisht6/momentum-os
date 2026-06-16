@@ -1,10 +1,6 @@
 import type { ChartPoint, MomentumStore } from "./types";
 import {
-  aggregateProgress,
-  flattenAnnualSubtasks,
-  flattenDailySubtasks,
-  flattenMonthlySubtasks,
-  progressPercent,
+  categoryProgress,
   toDateKey,
   toMonthKey,
 } from "./utils";
@@ -18,8 +14,9 @@ export function dailyChart(store: MomentumStore, days = 7): ChartPoint[] {
     const d = new Date(end);
     d.setDate(d.getDate() - i);
     const key = toDateKey(d);
-    const subtasks = flattenDailySubtasks(store.dailyCategories, key);
-    const progress = aggregateProgress(subtasks);
+    const progress = categoryProgress(
+      store.dailyCategories.filter((c) => c.dateKey === key),
+    );
     points.push({
       label: d.toLocaleDateString(undefined, { weekday: "short" }),
       percent: progress.percent,
@@ -38,8 +35,9 @@ export function monthlyChart(store: MomentumStore, months = 6): ChartPoint[] {
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(end.getFullYear(), end.getMonth() - i, 1);
     const key = toMonthKey(d);
-    const subtasks = flattenMonthlySubtasks(store.monthlyCategories, key);
-    const progress = aggregateProgress(subtasks);
+    const progress = categoryProgress(
+      store.monthlyCategories.filter((c) => c.monthKey === key),
+    );
     points.push({
       label: d.toLocaleDateString(undefined, { month: "short" }),
       percent: progress.percent,
@@ -56,8 +54,9 @@ export function annualChart(store: MomentumStore, years = 5): ChartPoint[] {
   const points: ChartPoint[] = [];
 
   for (let y = current - (years - 1); y <= current; y++) {
-    const subtasks = flattenAnnualSubtasks(store.annualCategories, y);
-    const progress = aggregateProgress(subtasks);
+    const progress = categoryProgress(
+      store.annualCategories.filter((c) => c.year === y),
+    );
     points.push({
       label: String(y),
       percent: progress.percent,
@@ -71,7 +70,7 @@ export function annualChart(store: MomentumStore, years = 5): ChartPoint[] {
 
 export function taskStatistics(store: MomentumStore) {
   const categories = store.dailyCategories;
-  const allSubtasks = flattenDailySubtasks(categories);
+  const progress = categoryProgress(categories);
   const byPriority: Record<Priority, number> = {
     critical: 0,
     high: 0,
@@ -80,18 +79,16 @@ export function taskStatistics(store: MomentumStore) {
   };
 
   for (const cat of categories) {
-    byPriority[cat.priority] += cat.subtasks.length;
+    byPriority[cat.priority] += Math.max(1, cat.subtasks.length);
   }
 
-  const completed = allSubtasks.filter((s) => s.completed).length;
-
   return {
-    total: allSubtasks.length,
+    total: progress.total,
     categories: categories.length,
-    completed,
-    pending: allSubtasks.length - completed,
+    completed: progress.completed,
+    pending: progress.pending,
     inProgress: 0,
-    completionRate: progressPercent(completed, allSubtasks.length),
+    completionRate: progress.percent,
     byPriority,
   };
 }

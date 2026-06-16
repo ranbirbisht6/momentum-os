@@ -9,18 +9,13 @@ import {
   Rocket,
   Target,
   TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
 import { buildAssistantInsights } from "../../lib/assistant";
 import { getRecentCategories } from "../../lib/dashboard";
 import { resolveUserName } from "../../lib/user";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
-import {
-  aggregateProgress,
-  flattenAnnualSubtasks,
-  flattenDailySubtasks,
-  flattenMonthlySubtasks,
-  pickTodayFocus,
-} from "../../utils";
+import { categoryProgress, pickTodayFocus } from "../../utils";
 import { AIAssistantCard } from "../AIAssistantCard";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
@@ -56,16 +51,16 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
 
   const monthProgress = useMemo(
     () =>
-      aggregateProgress(
-        flattenMonthlySubtasks(store.monthlyCategories, currentMonthKey),
+      categoryProgress(
+        store.monthlyCategories.filter((c) => c.monthKey === currentMonthKey),
       ),
     [store.monthlyCategories, currentMonthKey],
   );
 
   const yearProgress = useMemo(
     () =>
-      aggregateProgress(
-        flattenAnnualSubtasks(store.annualCategories, currentYear),
+      categoryProgress(
+        store.annualCategories.filter((c) => c.year === currentYear),
       ),
     [store.annualCategories, currentYear],
   );
@@ -81,34 +76,36 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
 
       <Surface>
         <div className="flex items-start gap-3">
-          <Target className="mt-0.5 h-5 w-5 text-violet-400" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
+            <Target className="h-5 w-5 accent-text" />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <p className="text-xs font-semibold uppercase tracking-wider soft-text">
               Today&apos;s focus
             </p>
             {focus ? (
               <>
-                <p className="mt-2 text-lg font-medium text-zinc-100">
+                <p className="mt-2 text-lg font-semibold text-[var(--text)]">
                   {focus.categoryTitle}
                 </p>
-                <p className="mt-1 text-sm text-cyan-400/90">{focus.subtaskTitle}</p>
+                <p className="mt-1 text-sm accent-text">{focus.subtaskTitle}</p>
                 <div className="mt-4">
-                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                  <div className="flex items-center justify-between text-xs muted-text">
                     <span>Completion</span>
                     <span>{focus.percent}%</span>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-soft)]">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500/80 transition-all"
+                      className="h-full rounded-full bg-[var(--accent)] transition-all"
                       style={{ width: `${focus.percent}%` }}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-zinc-500">Next pending task</p>
+                  <p className="mt-2 text-xs soft-text">Next pending task</p>
                 </div>
               </>
             ) : (
-              <p className="mt-2 text-sm text-zinc-500">
-                {hydrated ? "All caught up for today." : "Loading…"}
+              <p className="mt-2 text-sm muted-text">
+                {hydrated ? "All caught up for today." : "Loading..."}
               </p>
             )}
           </div>
@@ -142,22 +139,26 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
       {recent.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-zinc-500" />
-            <h2 className="text-sm font-medium text-zinc-400">Recent categories</h2>
+            <Layers className="h-4 w-4 soft-text" />
+            <h2 className="text-sm font-semibold text-[var(--text)]">
+              Recent tasks
+            </h2>
           </div>
-          <Surface padding="none" className="divide-y divide-white/[0.06]">
+          <Surface padding="none" className="divide-y divide-[var(--border)]">
             {recent.map((cat) => (
               <div
                 key={cat.id}
                 className="flex items-center justify-between px-5 py-4 sm:px-6"
               >
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">{cat.title}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
+                  <p className="text-sm font-medium text-[var(--text)]">
+                    {cat.title}
+                  </p>
+                  <p className="mt-0.5 text-xs muted-text">
                     {cat.completed}/{cat.total} completed
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-zinc-600" />
+                <ChevronRight className="h-4 w-4 soft-text" />
               </div>
             ))}
           </Surface>
@@ -166,21 +167,21 @@ function DashboardViewInner({ actions }: { actions: MomentumActions }) {
 
       <Surface className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10">
-            <Flame className="h-6 w-6 text-orange-400" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-soft)]">
+            <Flame className="h-6 w-6 accent-text" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider text-zinc-500">
+            <p className="text-xs uppercase tracking-wider soft-text">
               Current streak
             </p>
-            <p className="text-2xl font-semibold tabular-nums text-zinc-100">
-              {hydrated ? store.streak.currentStreak : "—"}{" "}
-              <span className="text-base font-normal text-zinc-500">days</span>
+            <p className="text-2xl font-semibold tabular-nums text-[var(--text)]">
+              {hydrated ? store.streak.currentStreak : "-"}{" "}
+              <span className="text-base font-normal muted-text">days</span>
             </p>
           </div>
         </div>
-        <p className="text-xs text-zinc-600">
-          Best {hydrated ? store.streak.bestStreak : "—"} days
+        <p className="text-xs muted-text">
+          Best {hydrated ? store.streak.bestStreak : "-"} days
         </p>
       </Surface>
     </PageContainer>
@@ -194,24 +195,24 @@ function ProgressCard({
   total,
   percent,
 }: {
-  icon: typeof Calendar;
+  icon: LucideIcon;
   label: string;
   completed: number;
   total: number;
   percent: number;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-4">
+    <div className="surface rounded-xl border px-4 py-4">
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-violet-400/80" />
-        <p className="text-xs font-medium text-zinc-500">{label}</p>
+        <Icon className="h-4 w-4 accent-text" />
+        <p className="text-xs font-medium muted-text">{label}</p>
       </div>
-      <p className="mt-3 text-2xl font-semibold tabular-nums text-zinc-100">
+      <p className="mt-3 text-2xl font-semibold tabular-nums text-[var(--text)]">
         {completed}/{total}
       </p>
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-zinc-800">
+      <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--surface-soft)]">
         <div
-          className="h-full rounded-full bg-violet-500/70"
+          className="h-full rounded-full bg-[var(--accent)]"
           style={{ width: `${percent}%` }}
         />
       </div>

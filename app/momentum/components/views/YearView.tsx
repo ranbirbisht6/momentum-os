@@ -31,7 +31,7 @@ export function YearView({
           max={2100}
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value) || currentYear)}
-          className="w-20 rounded-lg border-0 bg-transparent px-2 text-sm text-zinc-300 outline-none"
+          className="w-24 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
         />
       }
     />

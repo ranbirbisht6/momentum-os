@@ -30,7 +30,7 @@ export function MonthView({
           type="month"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="rounded-lg border-0 bg-transparent px-2 text-sm text-zinc-300 outline-none"
+          className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
         />
       }
     />

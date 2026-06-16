@@ -17,7 +17,7 @@ export function PeriodSelector({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+      <span className="text-xs font-semibold uppercase tracking-wider soft-text">
         {label}
       </span>
       <div className="flex items-center gap-1">
@@ -33,7 +33,7 @@ export function PeriodSelector({
         <button
           type="button"
           onClick={onToday}
-          className="text-xs font-medium text-violet-400 transition hover:text-violet-300"
+          className="text-xs font-medium accent-text transition hover:underline"
         >
           Go to current
         </button>
@@ -56,7 +56,7 @@ function NavButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-950/80 text-lg text-zinc-300 transition hover:border-white/20 hover:bg-zinc-900"
+      className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg text-[var(--text)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft)]"
     >
       {children}
     </button>

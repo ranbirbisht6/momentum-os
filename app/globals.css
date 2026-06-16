@@ -1,15 +1,105 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Geist, Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+:root {
+  --bg: #f7f4ee;
+  --bg-muted: #eee9df;
+  --surface: #fffcf7;
+  --surface-soft: #f5f1e8;
+  --border: #ddd6c9;
+  --border-strong: #cfc6b7;
+  --text: #24231f;
+  --muted: #756f65;
+  --muted-soft: #9a9285;
+  --accent: #2f6f4e;
+  --accent-strong: #24563d;
+  --accent-soft: #e2efe6;
+  --danger: #b54135;
+  --shadow: 0 18px 45px rgba(74, 67, 55, 0.08);
+}
+
+.theme-dark {
+  --bg: #1d1d1a;
+  --bg-muted: #25241f;
+  --surface: #2b2a25;
+  --surface-soft: #23221e;
+  --border: #3d3a32;
+  --border-strong: #4c483e;
+  --text: #f2eee5;
+  --muted: #b4ad9f;
+  --muted-soft: #847d70;
+  --accent: #7db38c;
+  --accent-strong: #9ac9a6;
+  --accent-soft: #253a2c;
+  --danger: #e27d72;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.26);
+}
+
+html {
+  background: var(--bg);
 }
 
 body {
-  background: #09090b;
-  color: #fafafa;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Geist, Inter, ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.app-bg {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 8%, transparent), transparent 34rem),
+    var(--bg);
+  color: var(--text);
+}
+
+.surface {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.surface-soft {
+  border-color: var(--border);
+  background: var(--surface-soft);
+}
+
+.muted-text {
+  color: var(--muted);
+}
+
+.soft-text {
+  color: var(--muted-soft);
+}
+
+.accent-text {
+  color: var(--accent);
+}
+
+.tag-pill {
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.tag-urgent {
+  border-color: color-mix(in srgb, var(--danger) 26%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  color: var(--danger);
+}
+
+.tag-doc {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
 }
 
 @keyframes complete-pop {

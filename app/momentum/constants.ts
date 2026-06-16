@@ -3,18 +3,20 @@ import {
   Brain,
   Calendar,
   CalendarRange,
+  ChartNoAxesColumnIncreasing,
   LayoutDashboard,
   Settings,
-  Sparkles,
+  Moon,
   Target,
 } from "lucide-react";
-import type { Priority, TabId } from "./types";
+import type { Priority, TabId, TaskTag } from "./types";
 
 export const STORAGE_KEY = "momentum-os-v3";
 export const STORAGE_KEY_V2 = "momentum-os-v2";
 export const LEGACY_STORAGE_KEY = "momentum-dashboard-v1";
 export const MAX_CATEGORIES = 10;
 export const DISPLAY_NAME_KEY = "momentum-display-name";
+export const THEME_KEY = "momentum-theme";
 
 export const PRIORITIES: { value: Priority; label: string }[] = [
   { value: "critical", label: "Critical" },
@@ -24,20 +26,36 @@ export const PRIORITIES: { value: Priority; label: string }[] = [
 ];
 
 export const PRIORITY_DOT: Record<Priority, string> = {
-  critical: "bg-red-400",
-  high: "bg-orange-400",
-  medium: "bg-violet-400",
-  low: "bg-emerald-400",
+  critical: "bg-red-500",
+  high: "bg-amber-500",
+  medium: "bg-stone-400",
+  low: "bg-emerald-600",
 };
 
-export const NAV_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
+export const TASK_TAGS: { value: TaskTag; label: string }[] = [
+  { value: "urgent", label: "Urgent" },
+  { value: "doc", label: "Doc" },
+];
+
+export const TASK_TAG_STYLES: Record<TaskTag, string> = {
+  urgent: "tag-urgent",
+  doc: "tag-doc",
+};
+
+export const PRIMARY_NAV_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "today", label: "Today", icon: Target },
   { id: "month", label: "Month", icon: Calendar },
   { id: "year", label: "Year", icon: CalendarRange },
   { id: "insights", label: "Insights", icon: Brain },
+  { id: "analytics", label: "Analytics", icon: ChartNoAxesColumnIncreasing },
+];
+
+export const SECONDARY_NAV_ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
+
+export const THEME_TOGGLE_ICON = Moon;
 
 export const TAB_TITLES: Record<TabId, { title: string; subtitle?: string }> = {
   dashboard: { title: "Dashboard" },
@@ -45,6 +63,7 @@ export const TAB_TITLES: Record<TabId, { title: string; subtitle?: string }> = {
   month: { title: "Month" },
   year: { title: "Year" },
   insights: { title: "Insights" },
+  analytics: { title: "Analytics" },
   settings: { title: "Settings" },
 };
 

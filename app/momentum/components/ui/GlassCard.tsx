@@ -9,7 +9,7 @@ export function GlassCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/[0.08] bg-white/[0.03] shadow-2xl shadow-black/40 backdrop-blur-xl ${className}`}
+      className={`surface rounded-xl border ${className}`}
     >
       {children}
     </div>
@@ -29,13 +29,13 @@ export function GlassPanel({
 }) {
   return (
     <GlassCard className="p-5 sm:p-6 lg:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.06] pb-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-5" style={{ borderColor: "var(--border)" }}>
         <div>
-          <h2 className="text-xl font-bold text-zinc-100">{title}</h2>
-          <p className="mt-1 text-sm text-zinc-500">{description}</p>
+          <h2 className="text-xl font-semibold text-[var(--text)]">{title}</h2>
+          <p className="mt-1 text-sm muted-text">{description}</p>
         </div>
         {counter && (
-          <span className="rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-1.5 text-sm font-semibold tabular-nums text-zinc-300">
+          <span className="rounded-lg border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1.5 text-sm font-semibold tabular-nums text-[var(--text)]">
             {counter}
           </span>
         )}

@@ -16,17 +16,17 @@ export function StatCard({
   accent?: string;
 }) {
   return (
-    <article className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 shadow-xl backdrop-blur-xl transition duration-300 hover:border-white/15 hover:bg-white/[0.06] sm:p-5">
-      <p className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+    <article className="surface rounded-xl border p-4 transition duration-300 hover:border-[var(--border-strong)] sm:p-5">
+      <p className="text-xs font-semibold uppercase tracking-wider soft-text">
         {label}
       </p>
       {sublabel && (
-        <p className="mt-0.5 truncate text-sm text-zinc-400">{sublabel}</p>
+        <p className="mt-0.5 truncate text-sm muted-text">{sublabel}</p>
       )}
-      <p className="mt-3 text-2xl font-bold tabular-nums text-zinc-100 sm:text-3xl">
+      <p className="mt-3 text-2xl font-semibold tabular-nums text-[var(--text)] sm:text-3xl">
         {value}
         {subvalue && (
-          <span className="text-lg font-normal text-zinc-500"> {subvalue}</span>
+          <span className="text-lg font-normal muted-text"> {subvalue}</span>
         )}
       </p>
       {percent !== undefined && accent && (
@@ -56,23 +56,23 @@ export function OverviewStatCard({
   glow: string;
 }) {
   return (
-    <article className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 shadow-xl backdrop-blur-xl transition duration-300 hover:border-white/15 sm:p-5">
+    <article className="surface rounded-xl border p-4 transition duration-300 hover:border-[var(--border-strong)] sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+          <p className="text-xs font-semibold uppercase tracking-wider soft-text">
             {label}
           </p>
-          <p className="mt-0.5 truncate text-sm text-zinc-400">{sublabel}</p>
+          <p className="mt-0.5 truncate text-sm muted-text">{sublabel}</p>
         </div>
         <span
-          className={`rounded-lg bg-gradient-to-br ${accent} px-2.5 py-1 text-sm font-bold text-white shadow-lg ${glow}`}
+          className={`rounded-md bg-gradient-to-br ${accent} px-2.5 py-1 text-sm font-semibold text-white ${glow}`}
         >
           {percent}%
         </span>
       </div>
-      <p className="mt-4 text-2xl font-bold tabular-nums text-zinc-100">
+      <p className="mt-4 text-2xl font-semibold tabular-nums text-[var(--text)]">
         {completed}
-        <span className="text-lg font-normal text-zinc-500"> / {total}</span>
+        <span className="text-lg font-normal muted-text"> / {total}</span>
       </p>
       <div className="mt-3">
         <ProgressBar percent={percent} gradient={accent} />

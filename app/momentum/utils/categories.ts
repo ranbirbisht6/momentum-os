@@ -27,6 +27,36 @@ export function subtaskProgress(subtasks: Subtask[]): ProgressSnapshot {
   };
 }
 
+export function categoryIsComplete(category: {
+  completed?: boolean;
+  subtasks: Subtask[];
+}) {
+  if (category.subtasks.length === 0) return Boolean(category.completed);
+  return category.subtasks.every((s) => s.completed);
+}
+
+export function categoryProgress(
+  categories: { completed?: boolean; subtasks: Subtask[] }[],
+): ProgressSnapshot {
+  const total = categories.reduce(
+    (sum, category) => sum + Math.max(1, category.subtasks.length),
+    0,
+  );
+  const completed = categories.reduce((sum, category) => {
+    if (category.subtasks.length === 0) {
+      return sum + (category.completed ? 1 : 0);
+    }
+    return sum + category.subtasks.filter((s) => s.completed).length;
+  }, 0);
+
+  return {
+    completed,
+    total,
+    pending: total - completed,
+    percent: progressPercent(completed, total),
+  };
+}
+
 export function sortByOrder<T extends { order: number }>(items: T[]) {
   return [...items].sort((a, b) => a.order - b.order);
 }
@@ -61,7 +91,7 @@ export function aggregateProgress(subtasks: Subtask[]): ProgressSnapshot {
 
 export function pickTodayFocus(categories: DailyCategory[]): TodayFocus | null {
   const today = categories
-    .map((c) => ({ category: c, progress: subtaskProgress(c.subtasks) }))
+    .map((c) => ({ category: c, progress: categoryProgress([c]) }))
     .filter((x) => x.progress.pending > 0)
     .sort(
       (a, b) =>
@@ -72,12 +102,11 @@ export function pickTodayFocus(categories: DailyCategory[]): TodayFocus | null {
 
   const { category } = today[0];
   const subtask = category.subtasks.find((s) => !s.completed);
-  if (!subtask) return null;
 
-  const progress = subtaskProgress(category.subtasks);
+  const progress = categoryProgress([category]);
   return {
     categoryTitle: category.title,
-    subtaskTitle: subtask.title,
+    subtaskTitle: subtask?.title ?? category.title,
     priority: category.priority,
     percent: progress.percent,
   };

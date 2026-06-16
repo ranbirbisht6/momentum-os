@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { TAB_TITLES } from "./constants";
+import { useEffect, useState } from "react";
+import { TAB_TITLES, THEME_KEY } from "./constants";
 import { ToastProvider } from "./hooks/useToast";
 import { useMomentumStore } from "./hooks/useMomentumStore";
 import type { TabId } from "./types";
@@ -26,13 +26,30 @@ function MomentumContent() {
   const [selectedYear, setSelectedYear] = useState(() =>
     new Date().getFullYear(),
   );
+  const [darkMode, setDarkMode] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(THEME_KEY) === "dark",
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("theme-dark", darkMode);
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkMode((current) => {
+      const next = !current;
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+      return next;
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100">
+    <div className={`app-bg min-h-screen ${darkMode ? "theme-dark" : "theme-light"}`}>
       <AppShell
         activeTab={tab}
         onNavigate={setTab}
         title={TAB_TITLES[tab].title}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
       >
         {tab === "dashboard" && <DashboardView actions={actions} />}
         {tab === "today" && (
@@ -60,6 +77,7 @@ function MomentumContent() {
           />
         )}
         {tab === "insights" && <InsightsView actions={actions} />}
+        {tab === "analytics" && <InsightsView actions={actions} analyticsOnly />}
         {tab === "settings" && <SettingsView actions={actions} />}
       </AppShell>
     </div>

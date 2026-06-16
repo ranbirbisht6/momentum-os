@@ -60,6 +60,8 @@ export function shiftMonth(key: string, months: number) {
 
 export {
   aggregateProgress,
+  categoryIsComplete,
+  categoryProgress,
   filterCategories,
   flattenAnnualSubtasks,
   flattenDailySubtasks,

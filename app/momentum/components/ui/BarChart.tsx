@@ -2,7 +2,7 @@ import type { ChartPoint } from "../../types";
 
 export function BarChart({
   data,
-  gradient = "from-violet-500 to-fuchsia-500",
+  gradient,
 }: {
   data: ChartPoint[];
   gradient?: string;
@@ -16,12 +16,12 @@ export function BarChart({
           key={point.label}
           className="flex min-w-0 flex-1 flex-col items-center gap-2"
         >
-          <span className="text-[0.65rem] font-semibold tabular-nums text-zinc-400 sm:text-xs">
+          <span className="text-[0.65rem] font-semibold tabular-nums muted-text sm:text-xs">
             {point.percent}%
           </span>
           <div className="flex w-full flex-1 items-end justify-center">
             <div
-              className={`w-full max-w-10 rounded-t-lg bg-gradient-to-t ${gradient} transition-all duration-700 ease-out`}
+              className={`w-full max-w-10 rounded-t-md transition-all duration-700 ease-out ${gradient ? `bg-gradient-to-t ${gradient}` : "bg-[var(--accent)]"}`}
               style={{
                 height: `${Math.max(4, (point.percent / max) * 100)}%`,
                 minHeight: point.total > 0 ? "8px" : "4px",
@@ -29,7 +29,7 @@ export function BarChart({
               title={`${point.completed}/${point.total}`}
             />
           </div>
-          <span className="truncate text-[0.6rem] text-zinc-500 sm:text-xs">
+          <span className="truncate text-[0.6rem] soft-text sm:text-xs">
             {point.label}
           </span>
         </div>

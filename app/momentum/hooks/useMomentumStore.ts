@@ -16,11 +16,10 @@ import type {
   DailyCategory,
   MomentumStore,
   MonthlyCategory,
-  Priority,
+  TaskTag,
 } from "../types";
 import {
-  aggregateProgress,
-  flattenDailySubtasks,
+  categoryProgress,
   sortByOrder,
   toDateKey,
   toMonthKey,
@@ -35,6 +34,12 @@ function subtasksFromTitles(titles: string[]) {
     .map((title) => createSubtask(title));
 }
 
+function tagsFromInput(tags?: TaskTag[]) {
+  return [...new Set(tags ?? [])].filter(
+    (tag): tag is TaskTag => tag === "urgent" || tag === "doc",
+  );
+}
+
 export function useMomentumStore() {
   const [store, setStore] = useState<MomentumStore>(EMPTY_STORE);
   const [hydrated, setHydrated] = useState(false);
@@ -44,8 +49,11 @@ export function useMomentumStore() {
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    setStore(loadStore());
-    setHydrated(true);
+    const id = window.setTimeout(() => {
+      setStore(loadStore());
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   const withStreak = useCallback(
@@ -75,8 +83,8 @@ export function useMomentumStore() {
   );
 
   const todayProgress = useMemo(() => {
-    const subtasks = flattenDailySubtasks(store.dailyCategories, todayKey);
-    return aggregateProgress(subtasks);
+    const categories = store.dailyCategories.filter((c) => c.dateKey === todayKey);
+    return categoryProgress(categories);
   }, [store.dailyCategories, todayKey]);
 
   const getDailyCategories = useCallback(
@@ -110,6 +118,8 @@ export function useMomentumStore() {
             title: input.title.trim(),
             description: (input.description ?? "").trim(),
             priority: input.priority ?? "medium",
+            completed: false,
+            tags: tagsFromInput(input.tags),
             dateKey,
             subtasks: subtasksFromTitles(input.subtaskTitles),
             createdAt: Date.now(),
@@ -124,11 +134,25 @@ export function useMomentumStore() {
   );
 
   const updateDailyCategory = useCallback(
-    (id: string, patch: Partial<Pick<DailyCategory, "title" | "description" | "priority">>) => {
+    (id: string, patch: Partial<Pick<DailyCategory, "title" | "description" | "priority" | "tags">>) => {
       updateStore((prev) => ({
         ...prev,
         dailyCategories: prev.dailyCategories.map((c) =>
           c.id === id ? { ...c, ...patch } : c,
+        ),
+      }));
+    },
+    [updateStore],
+  );
+
+  const toggleDailyCategory = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        dailyCategories: prev.dailyCategories.map((c) =>
+          c.id === id && c.subtasks.length === 0
+            ? { ...c, completed: !c.completed }
+            : c,
         ),
       }));
     },
@@ -206,6 +230,8 @@ export function useMomentumStore() {
             id: createId(),
             title: input.title.trim(),
             description: (input.description ?? "").trim(),
+            completed: false,
+            tags: tagsFromInput(input.tags),
             monthKey,
             subtasks: subtasksFromTitles(input.subtaskTitles),
             createdAt: Date.now(),
@@ -220,11 +246,25 @@ export function useMomentumStore() {
   );
 
   const updateMonthlyCategory = useCallback(
-    (id: string, patch: Partial<Pick<MonthlyCategory, "title" | "description">>) => {
+    (id: string, patch: Partial<Pick<MonthlyCategory, "title" | "description" | "tags">>) => {
       updateStore((prev) => ({
         ...prev,
         monthlyCategories: prev.monthlyCategories.map((c) =>
           c.id === id ? { ...c, ...patch } : c,
+        ),
+      }));
+    },
+    [updateStore],
+  );
+
+  const toggleMonthlyCategory = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        monthlyCategories: prev.monthlyCategories.map((c) =>
+          c.id === id && c.subtasks.length === 0
+            ? { ...c, completed: !c.completed }
+            : c,
         ),
       }));
     },
@@ -302,6 +342,8 @@ export function useMomentumStore() {
             id: createId(),
             title: input.title.trim(),
             description: (input.description ?? "").trim(),
+            completed: false,
+            tags: tagsFromInput(input.tags),
             year,
             subtasks: subtasksFromTitles(input.subtaskTitles),
             createdAt: Date.now(),
@@ -316,11 +358,25 @@ export function useMomentumStore() {
   );
 
   const updateAnnualCategory = useCallback(
-    (id: string, patch: Partial<Pick<AnnualCategory, "title" | "description">>) => {
+    (id: string, patch: Partial<Pick<AnnualCategory, "title" | "description" | "tags">>) => {
       updateStore((prev) => ({
         ...prev,
         annualCategories: prev.annualCategories.map((c) =>
           c.id === id ? { ...c, ...patch } : c,
+        ),
+      }));
+    },
+    [updateStore],
+  );
+
+  const toggleAnnualCategory = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        annualCategories: prev.annualCategories.map((c) =>
+          c.id === id && c.subtasks.length === 0
+            ? { ...c, completed: !c.completed }
+            : c,
         ),
       }));
     },
@@ -435,18 +491,21 @@ export function useMomentumStore() {
     getAnnualCategories,
     createDailyCategory,
     updateDailyCategory,
+    toggleDailyCategory,
     deleteDailyCategory,
     addDailySubtask,
     toggleDailySubtask,
     deleteDailySubtask,
     createMonthlyCategory,
     updateMonthlyCategory,
+    toggleMonthlyCategory,
     deleteMonthlyCategory,
     addMonthlySubtask,
     toggleMonthlySubtask,
     deleteMonthlySubtask,
     createAnnualCategory,
     updateAnnualCategory,
+    toggleAnnualCategory,
     deleteAnnualCategory,
     addAnnualSubtask,
     toggleAnnualSubtask,
