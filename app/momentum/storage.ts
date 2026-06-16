@@ -1,4 +1,5 @@
 import {
+  DEFAULT_TEAM_WORKSPACE,
   EMPTY_STREAK,
   LEGACY_STORAGE_KEY,
   STORAGE_KEY,
@@ -10,8 +11,11 @@ import type {
   MomentumStore,
   MonthlyCategory,
   Priority,
+  ReminderRule,
+  RecurrenceRule,
   Subtask,
   TaskTag,
+  TeamWorkspace,
 } from "./types";
 import { createId, toDateKey } from "./utils";
 import { sortByOrder } from "./utils/categories";
@@ -20,6 +24,10 @@ export const EMPTY_STORE: MomentumStore = {
   dailyCategories: [],
   monthlyCategories: [],
   annualCategories: [],
+  goals: [],
+  reviews: [],
+  journalEntries: [],
+  teamWorkspace: DEFAULT_TEAM_WORKSPACE,
   notes: "",
   streak: { ...EMPTY_STREAK, unlockedBadges: [] },
 };
@@ -38,6 +46,60 @@ function migrateTags(raw: unknown): TaskTag[] {
   return raw.filter((tag): tag is TaskTag => tag === "urgent" || tag === "doc");
 }
 
+function migrateRecurrence(raw: unknown): RecurrenceRule {
+  if (!raw || typeof raw !== "object") return { frequency: "none" };
+  const value = raw as Record<string, unknown>;
+  const frequency =
+    value.frequency === "daily" ||
+    value.frequency === "weekly" ||
+    value.frequency === "monthly" ||
+    value.frequency === "yearly" ||
+    value.frequency === "custom"
+      ? value.frequency
+      : "none";
+  return {
+    frequency,
+    customEveryDays: Number(value.customEveryDays || 0) || undefined,
+  };
+}
+
+function migrateReminder(raw: unknown): ReminderRule {
+  if (!raw || typeof raw !== "object") return { offset: "none" };
+  const value = raw as Record<string, unknown>;
+  const offset =
+    value.offset === "15m" ||
+    value.offset === "30m" ||
+    value.offset === "1h" ||
+    value.offset === "3h" ||
+    value.offset === "1d" ||
+    value.offset === "custom"
+      ? value.offset
+      : "none";
+  return {
+    offset,
+    customMinutes: Number(value.customMinutes || 0) || undefined,
+  };
+}
+
+function migrateTeamWorkspace(raw: unknown): TeamWorkspace {
+  if (!raw || typeof raw !== "object") return DEFAULT_TEAM_WORKSPACE;
+  const value = raw as Partial<TeamWorkspace>;
+  return {
+    id: String(value.id ?? DEFAULT_TEAM_WORKSPACE.id),
+    name: String(value.name ?? DEFAULT_TEAM_WORKSPACE.name),
+    kind:
+      value.kind === "company" ||
+      value.kind === "startup" ||
+      value.kind === "team" ||
+      value.kind === "department"
+        ? value.kind
+        : DEFAULT_TEAM_WORKSPACE.kind,
+    members: Array.isArray(value.members) ? value.members : DEFAULT_TEAM_WORKSPACE.members,
+    projects: Array.isArray(value.projects) ? value.projects : DEFAULT_TEAM_WORKSPACE.projects,
+    activity: Array.isArray(value.activity) ? value.activity : DEFAULT_TEAM_WORKSPACE.activity,
+  };
+}
+
 function migrateDailyCategory(
   raw: Record<string, unknown>,
   index: number,
@@ -52,10 +114,18 @@ function migrateDailyCategory(
     priority: (raw.priority as Priority) ?? "medium",
     completed: Boolean(raw.completed),
     tags: migrateTags(raw.tags),
+    recurrence: migrateRecurrence(raw.recurrence),
+    reminder: migrateReminder(raw.reminder),
+    scheduledAt: typeof raw.scheduledAt === "string" ? raw.scheduledAt : undefined,
+    deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
+    assigneeId: typeof raw.assigneeId === "string" ? raw.assigneeId : undefined,
+    projectId: typeof raw.projectId === "string" ? raw.projectId : undefined,
     dateKey: String(raw.dateKey ?? toDateKey(new Date())),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
     order: Number(raw.order ?? index),
+    sourceRecurringId:
+      typeof raw.sourceRecurringId === "string" ? raw.sourceRecurringId : undefined,
   };
 }
 
@@ -72,6 +142,7 @@ function migrateMonthlyCategory(
     description: String(raw.description ?? ""),
     completed: Boolean(raw.completed),
     tags: migrateTags(raw.tags),
+    deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
     monthKey: String(raw.monthKey ?? ""),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
@@ -92,6 +163,7 @@ function migrateAnnualCategory(
     description: String(raw.description ?? ""),
     completed: Boolean(raw.completed),
     tags: migrateTags(raw.tags),
+    deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
     year: Number(raw.year ?? new Date().getFullYear()),
     subtasks,
     createdAt: Number(raw.createdAt ?? Date.now()),
@@ -109,6 +181,8 @@ function taskToDailyCategory(raw: Record<string, unknown>, index: number): Daily
     priority: (raw.priority as Priority) ?? "medium",
     completed,
     tags: migrateTags(raw.tags),
+    recurrence: migrateRecurrence(raw.recurrence),
+    reminder: migrateReminder(raw.reminder),
     dateKey: String(raw.dateKey ?? toDateKey(new Date())),
     subtasks: [
       {
@@ -131,6 +205,7 @@ function goalToMonthlyCategory(raw: Record<string, unknown>, index: number): Mon
     description: "",
     completed,
     tags: migrateTags(raw.tags),
+    deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
     monthKey: String(raw.monthKey ?? ""),
     subtasks: [
       {
@@ -156,6 +231,7 @@ function objectiveToAnnualCategory(
     description: "",
     completed,
     tags: migrateTags(raw.tags),
+    deadline: typeof raw.deadline === "string" ? raw.deadline : undefined,
     year: Number(raw.year ?? new Date().getFullYear()),
     subtasks: [
       {
@@ -185,6 +261,10 @@ function migrateFromLegacyFlat(partial: Record<string, unknown>): MomentumStore 
     dailyCategories: dailyTasks.map(taskToDailyCategory),
     monthlyCategories: monthlyGoals.map(goalToMonthlyCategory),
     annualCategories: annualObjectives.map(objectiveToAnnualCategory),
+    goals: [],
+    reviews: [],
+    journalEntries: [],
+    teamWorkspace: DEFAULT_TEAM_WORKSPACE,
     notes: typeof partial.notes === "string" ? partial.notes : "",
     streak: {
       ...EMPTY_STREAK,
@@ -219,6 +299,12 @@ export function normalizeStore(partial: Partial<MomentumStore> & Record<string, 
     dailyCategories: sortByOrder(dailyCategories),
     monthlyCategories: sortByOrder(monthlyCategories),
     annualCategories: sortByOrder(annualCategories),
+    goals: Array.isArray(partial.goals) ? partial.goals : [],
+    reviews: Array.isArray(partial.reviews) ? partial.reviews : [],
+    journalEntries: Array.isArray(partial.journalEntries)
+      ? partial.journalEntries
+      : [],
+    teamWorkspace: migrateTeamWorkspace(partial.teamWorkspace),
     notes: typeof partial.notes === "string" ? partial.notes : "",
     displayName:
       typeof partial.displayName === "string" ? partial.displayName : undefined,

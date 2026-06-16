@@ -100,7 +100,7 @@ export function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 p-3" aria-label="Main">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main">
           {PRIMARY_NAV_ITEMS.map(renderNavItem)}
         </nav>
 

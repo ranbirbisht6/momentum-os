@@ -7,10 +7,16 @@ import { useMomentumStore } from "./hooks/useMomentumStore";
 import type { TabId } from "./types";
 import { toDateKey, toMonthKey } from "./utils";
 import { AppShell } from "./components/layout/AppShell";
+import { AIPlanningView } from "./components/views/AIPlanningView";
+import { CalendarView } from "./components/views/CalendarView";
 import { DashboardView } from "./components/views/DashboardView";
+import { GoalsView } from "./components/views/GoalsView";
 import { InsightsView } from "./components/views/InsightsView";
+import { JournalView } from "./components/views/JournalView";
 import { MonthView } from "./components/views/MonthView";
+import { ReviewsView } from "./components/views/ReviewsView";
 import { SettingsView } from "./components/views/SettingsView";
+import { TeamView } from "./components/views/TeamView";
 import { TodayView } from "./components/views/TodayView";
 import { YearView } from "./components/views/YearView";
 
@@ -52,6 +58,7 @@ function MomentumContent() {
         onToggleDarkMode={toggleDarkMode}
       >
         {tab === "dashboard" && <DashboardView actions={actions} />}
+        {tab === "calendar" && <CalendarView actions={actions} />}
         {tab === "today" && (
           <TodayView
             actions={actions}
@@ -76,6 +83,11 @@ function MomentumContent() {
             currentYear={currentYear}
           />
         )}
+        {tab === "goals" && <GoalsView actions={actions} />}
+        {tab === "ai-planning" && <AIPlanningView actions={actions} />}
+        {tab === "reviews" && <ReviewsView actions={actions} />}
+        {tab === "journal" && <JournalView actions={actions} />}
+        {tab === "team" && <TeamView actions={actions} />}
         {tab === "insights" && <InsightsView actions={actions} />}
         {tab === "analytics" && <InsightsView actions={actions} analyticsOnly />}
         {tab === "settings" && <SettingsView actions={actions} />}

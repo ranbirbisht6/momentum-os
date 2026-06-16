@@ -9,7 +9,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { PRIORITY_DOT, TASK_TAGS, TASK_TAG_STYLES } from "../constants";
-import type { Priority, Subtask, TaskTag } from "../types";
+import type {
+  Priority,
+  RecurrenceRule,
+  ReminderRule,
+  Subtask,
+  TaskTag,
+} from "../types";
 import { categoryIsComplete, subtaskProgress } from "../utils";
 import { ConfirmModal } from "./ui/ConfirmModal";
 
@@ -21,6 +27,10 @@ export type CategoryData = {
   priority?: Priority;
   completed?: boolean;
   tags: TaskTag[];
+  recurrence?: RecurrenceRule;
+  reminder?: ReminderRule;
+  scheduledAt?: string;
+  deadline?: string;
 };
 
 function CategorySectionInner({
@@ -127,6 +137,20 @@ function CategorySectionInner({
                       {TASK_TAGS.find((t) => t.value === tag)?.label ?? tag}
                     </span>
                   ))}
+                  {category.recurrence?.frequency &&
+                    category.recurrence.frequency !== "none" && (
+                      <span className="tag-pill inline-flex rounded-full px-2 py-0.5 text-[0.68rem] font-medium">
+                        {category.recurrence.frequency === "custom"
+                          ? `Every ${category.recurrence.customEveryDays ?? 1}d`
+                          : category.recurrence.frequency}
+                      </span>
+                    )}
+                  {category.reminder?.offset &&
+                    category.reminder.offset !== "none" && (
+                      <span className="tag-pill inline-flex rounded-full px-2 py-0.5 text-[0.68rem] font-medium">
+                        Reminder {category.reminder.offset}
+                      </span>
+                    )}
                 </div>
                 {category.description && (
                   <p
@@ -140,6 +164,8 @@ function CategorySectionInner({
                 <p className="mt-2 text-xs soft-text">
                   {progress.completed}/{progress.total} tasks
                   {progress.total > 0 ? ` - ${progress.percent}%` : ""}
+                  {category.scheduledAt ? ` - ${category.scheduledAt}` : ""}
+                  {category.deadline ? ` - Due ${category.deadline}` : ""}
                 </p>
                 {progress.total > 0 && (
                   <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--surface-soft)]">

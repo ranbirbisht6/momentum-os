@@ -2,8 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import { PRIORITIES, TASK_TAGS, TASK_TAG_STYLES } from "../constants";
-import type { CreateCategoryInput, Priority, TaskTag } from "../types";
+import {
+  PRIORITIES,
+  RECURRENCE_OPTIONS,
+  REMINDER_OPTIONS,
+  TASK_TAGS,
+  TASK_TAG_STYLES,
+} from "../constants";
+import type {
+  CreateCategoryInput,
+  Priority,
+  RecurrenceFrequency,
+  ReminderOffset,
+  TaskTag,
+} from "../types";
 import { Modal } from "./ui/Modal";
 import { PrimaryButton, SelectInput, TextInput } from "./ui/inputs";
 
@@ -23,6 +35,12 @@ export function NewCategoryModal({
   const [subtasks, setSubtasks] = useState<string[]>([""]);
   const [priority, setPriority] = useState<Priority>("medium");
   const [tags, setTags] = useState<TaskTag[]>([]);
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>("none");
+  const [customEveryDays, setCustomEveryDays] = useState("3");
+  const [reminder, setReminder] = useState<ReminderOffset>("none");
+  const [customReminderMinutes, setCustomReminderMinutes] = useState("90");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [deadline, setDeadline] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -32,6 +50,12 @@ export function NewCategoryModal({
       setSubtasks([""]);
       setPriority("medium");
       setTags([]);
+      setRecurrence("none");
+      setCustomEveryDays("3");
+      setReminder("none");
+      setCustomReminderMinutes("90");
+      setScheduledAt("");
+      setDeadline("");
     }, 0);
     return () => window.clearTimeout(id);
   }, [open]);
@@ -68,6 +92,22 @@ export function NewCategoryModal({
             description: description.trim() || undefined,
             subtaskTitles: subtasks,
             tags,
+            recurrence: {
+              frequency: recurrence,
+              customEveryDays:
+                recurrence === "custom"
+                  ? Math.max(1, Number(customEveryDays) || 1)
+                  : undefined,
+            },
+            reminder: {
+              offset: reminder,
+              customMinutes:
+                reminder === "custom"
+                  ? Math.max(1, Number(customReminderMinutes) || 1)
+                  : undefined,
+            },
+            scheduledAt: scheduledAt || undefined,
+            deadline: deadline || undefined,
             ...(showPriority ? { priority } : {}),
           });
           onClose();
@@ -153,6 +193,62 @@ export function NewCategoryModal({
         {showPriority && (
           <SelectInput value={priority} onChange={setPriority} options={PRIORITIES} />
         )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Repeat</span>
+            <SelectInput
+              value={recurrence}
+              onChange={setRecurrence}
+              options={RECURRENCE_OPTIONS}
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Reminder</span>
+            <SelectInput
+              value={reminder}
+              onChange={setReminder}
+              options={REMINDER_OPTIONS}
+            />
+          </label>
+          {recurrence === "custom" && (
+            <label className="space-y-1.5">
+              <span className="text-xs muted-text">Every days</span>
+              <TextInput
+                value={customEveryDays}
+                onChange={setCustomEveryDays}
+                placeholder="3"
+              />
+            </label>
+          )}
+          {reminder === "custom" && (
+            <label className="space-y-1.5">
+              <span className="text-xs muted-text">Reminder minutes</span>
+              <TextInput
+                value={customReminderMinutes}
+                onChange={setCustomReminderMinutes}
+                placeholder="90"
+              />
+            </label>
+          )}
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Schedule time</span>
+            <input
+              type="time"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Deadline</span>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="min-h-11 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            />
+          </label>
+        </div>
         <div className="flex gap-2 pt-2">
           <PrimaryButton type="submit" disabled={!title.trim()}>
             Save task

@@ -1,8 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PRIORITIES, TASK_TAGS, TASK_TAG_STYLES } from "../constants";
-import type { Priority, TaskTag } from "../types";
+import {
+  PRIORITIES,
+  RECURRENCE_OPTIONS,
+  REMINDER_OPTIONS,
+  TASK_TAGS,
+  TASK_TAG_STYLES,
+} from "../constants";
+import type {
+  Priority,
+  RecurrenceFrequency,
+  RecurrenceRule,
+  ReminderOffset,
+  ReminderRule,
+  TaskTag,
+} from "../types";
 import { Modal } from "./ui/Modal";
 import { PrimaryButton, SelectInput, TextInput } from "./ui/inputs";
 
@@ -12,6 +25,10 @@ export function EditCategoryModal({
   description: initialDescription = "",
   priority: initialPriority,
   tags: initialTags = [],
+  recurrence: initialRecurrence = { frequency: "none" },
+  reminder: initialReminder = { offset: "none" },
+  scheduledAt: initialScheduledAt = "",
+  deadline: initialDeadline = "",
   showPriority,
   onClose,
   onSave,
@@ -21,6 +38,10 @@ export function EditCategoryModal({
   description?: string;
   priority?: Priority;
   tags?: TaskTag[];
+  recurrence?: RecurrenceRule;
+  reminder?: ReminderRule;
+  scheduledAt?: string;
+  deadline?: string;
   showPriority: boolean;
   onClose: () => void;
   onSave: (data: {
@@ -28,12 +49,28 @@ export function EditCategoryModal({
     description: string;
     priority?: Priority;
     tags: TaskTag[];
+    recurrence: RecurrenceRule;
+    reminder: ReminderRule;
+    scheduledAt?: string;
+    deadline?: string;
   }) => void;
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [priority, setPriority] = useState<Priority>(initialPriority ?? "medium");
   const [tags, setTags] = useState<TaskTag[]>(initialTags);
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency>(
+    initialRecurrence.frequency,
+  );
+  const [customEveryDays, setCustomEveryDays] = useState(
+    String(initialRecurrence.customEveryDays ?? 3),
+  );
+  const [reminder, setReminder] = useState<ReminderOffset>(initialReminder.offset);
+  const [customReminderMinutes, setCustomReminderMinutes] = useState(
+    String(initialReminder.customMinutes ?? 90),
+  );
+  const [scheduledAt, setScheduledAt] = useState(initialScheduledAt);
+  const [deadline, setDeadline] = useState(initialDeadline);
 
   useEffect(() => {
     if (!open) return;
@@ -42,9 +79,25 @@ export function EditCategoryModal({
       setDescription(initialDescription);
       setPriority(initialPriority ?? "medium");
       setTags(initialTags);
+      setRecurrence(initialRecurrence.frequency);
+      setCustomEveryDays(String(initialRecurrence.customEveryDays ?? 3));
+      setReminder(initialReminder.offset);
+      setCustomReminderMinutes(String(initialReminder.customMinutes ?? 90));
+      setScheduledAt(initialScheduledAt);
+      setDeadline(initialDeadline);
     }, 0);
     return () => window.clearTimeout(id);
-  }, [open, initialTitle, initialDescription, initialPriority, initialTags]);
+  }, [
+    open,
+    initialTitle,
+    initialDescription,
+    initialPriority,
+    initialTags,
+    initialRecurrence,
+    initialReminder,
+    initialScheduledAt,
+    initialDeadline,
+  ]);
 
   const toggleTag = (tag: TaskTag) => {
     setTags((current) =>
@@ -65,6 +118,22 @@ export function EditCategoryModal({
             title: title.trim(),
             description: description.trim(),
             tags,
+            recurrence: {
+              frequency: recurrence,
+              customEveryDays:
+                recurrence === "custom"
+                  ? Math.max(1, Number(customEveryDays) || 1)
+                  : undefined,
+            },
+            reminder: {
+              offset: reminder,
+              customMinutes:
+                reminder === "custom"
+                  ? Math.max(1, Number(customReminderMinutes) || 1)
+                  : undefined,
+            },
+            scheduledAt: scheduledAt || undefined,
+            deadline: deadline || undefined,
             ...(showPriority ? { priority } : {}),
           });
           onClose();
@@ -104,6 +173,50 @@ export function EditCategoryModal({
         {showPriority && (
           <SelectInput value={priority} onChange={setPriority} options={PRIORITIES} />
         )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Repeat</span>
+            <SelectInput
+              value={recurrence}
+              onChange={setRecurrence}
+              options={RECURRENCE_OPTIONS}
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs muted-text">Reminder</span>
+            <SelectInput
+              value={reminder}
+              onChange={setReminder}
+              options={REMINDER_OPTIONS}
+            />
+          </label>
+          {recurrence === "custom" && (
+            <TextInput
+              value={customEveryDays}
+              onChange={setCustomEveryDays}
+              placeholder="Every days"
+            />
+          )}
+          {reminder === "custom" && (
+            <TextInput
+              value={customReminderMinutes}
+              onChange={setCustomReminderMinutes}
+              placeholder="Reminder minutes"
+            />
+          )}
+          <input
+            type="time"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="min-h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+          />
+          <input
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="min-h-11 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+          />
+        </div>
         <div className="flex gap-2 pt-2">
           <PrimaryButton type="submit">Save</PrimaryButton>
           <button

@@ -89,6 +89,10 @@ export function PlannerPage({
     description: c.description || undefined,
     completed: c.completed,
     tags: c.tags,
+    recurrence: "recurrence" in c ? c.recurrence : undefined,
+    reminder: "reminder" in c ? c.reminder : undefined,
+    scheduledAt: "scheduledAt" in c ? c.scheduledAt : undefined,
+    deadline: c.deadline,
     subtasks: c.subtasks,
     priority: "priority" in c ? c.priority : undefined,
   });
@@ -234,21 +238,38 @@ export function PlannerPage({
         description={editing?.description ?? ""}
         priority={editing?.priority}
         tags={editing?.tags ?? []}
+        recurrence={editing?.recurrence}
+        reminder={editing?.reminder}
+        scheduledAt={editing?.scheduledAt}
+        deadline={editing?.deadline}
         showPriority={scope === "daily"}
         onClose={() => setEditing(null)}
-        onSave={({ title, description, priority: p, tags }) => {
+        onSave={({
+          title,
+          description,
+          priority: p,
+          tags,
+          recurrence,
+          reminder,
+          scheduledAt,
+          deadline,
+        }) => {
           if (!editing) return;
           if (scope === "daily") {
             actions.updateDailyCategory(editing.id, {
               title,
               description,
               tags,
+              recurrence,
+              reminder,
+              scheduledAt,
+              deadline,
               ...(p ? { priority: p } : {}),
             });
           } else if (scope === "monthly") {
-            actions.updateMonthlyCategory(editing.id, { title, description, tags });
+            actions.updateMonthlyCategory(editing.id, { title, description, tags, deadline });
           } else {
-            actions.updateAnnualCategory(editing.id, { title, description, tags });
+            actions.updateAnnualCategory(editing.id, { title, description, tags, deadline });
           }
           toast.success("Task updated");
         }}
