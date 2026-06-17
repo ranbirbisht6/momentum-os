@@ -2,9 +2,21 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Momentum - Productivity OS",
+  metadataBase: new URL("https://momentum-os.local"),
+  title: {
+    default: "Momentum OS - Think Less. Execute More.",
+    template: "%s | Momentum OS",
+  },
   description:
-    "Daily planner, monthly goals, annual objectives, analytics, and streaks.",
+    "An AI-powered productivity operating system for goals, tasks, calendar planning, reviews, journaling, and progress tracking.",
+  keywords: [
+    "Momentum OS",
+    "productivity",
+    "AI planning",
+    "task management",
+    "goals",
+    "calendar",
+  ],
 };
 
 export default function RootLayout({
