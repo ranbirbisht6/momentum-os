@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { MomentumActions } from "../../hooks/useMomentumStore";
 import { useToast } from "../../hooks/useToast";
 import { DISPLAY_NAME_KEY } from "../../constants";
 import { resolveUserName } from "../../lib/user";
+import { getSupabaseBrowserClient } from "../../../lib/supabase/client";
 import { PageContainer } from "../design/PageContainer";
 import { Surface } from "../design/Surface";
 import { PrimaryButton } from "../ui/inputs";
@@ -12,9 +14,11 @@ import { PrimaryButton } from "../ui/inputs";
 export function SettingsView({ actions }: { actions: MomentumActions }) {
   const { exportData, importData, store, hydrated, setDisplayName } = actions;
   const toast = useToast();
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importText, setImportText] = useState("");
   const [name, setName] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -58,8 +62,34 @@ export function SettingsView({ actions }: { actions: MomentumActions }) {
     else toast.error("Paste JSON or choose a file");
   };
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setLoggingOut(false);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Logged out");
+    router.replace("/login");
+    router.refresh();
+  };
+
   return (
     <PageContainer className="max-w-lg space-y-6">
+      <Surface>
+        <p className="text-sm font-semibold text-[var(--text)]">Account</p>
+        <p className="mt-1 text-xs muted-text">
+          Sign out of this Momentum OS session on this device.
+        </p>
+        <div className="mt-4">
+          <PrimaryButton onClick={handleLogout} disabled={loggingOut} tone="danger">
+            {loggingOut ? "Logging out..." : "Logout"}
+          </PrimaryButton>
+        </div>
+      </Surface>
+
       <Surface>
         <p className="text-sm font-semibold text-[var(--text)]">Display name</p>
         <p className="mt-1 text-xs muted-text">

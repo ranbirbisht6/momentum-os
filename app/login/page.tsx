@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthPage } from "../components/AuthPage";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <AuthPage mode="login" />;
+  return (
+    <Suspense>
+      <AuthPage mode="login" />
+    </Suspense>
+  );
 }
