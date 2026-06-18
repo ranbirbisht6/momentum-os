@@ -38,7 +38,7 @@ export async function verifySupabaseConnection() {
     };
   }
 
-  const response = await fetch(new URL("/rest/v1/", supabaseUrl), {
+  const response = await fetch(new URL("/auth/v1/settings", supabaseUrl), {
     headers: {
       apikey: supabaseAnonKey,
       Authorization: `Bearer ${supabaseAnonKey}`,

@@ -34,7 +34,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let endpoint;
 
 try {
-  endpoint = new URL("/rest/v1/", supabaseUrl);
+  endpoint = new URL("/auth/v1/settings", supabaseUrl);
 } catch {
   console.error("NEXT_PUBLIC_SUPABASE_URL must be a valid Supabase project URL.");
   process.exit(1);
